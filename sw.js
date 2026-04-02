@@ -1,5 +1,5 @@
-const CACHE_NAME = 'maizuru-tour-v2';
-const TILE_CACHE = 'maizuru-tiles-v2';
+const CACHE_NAME = 'maizuru-tour-v3';
+const TILE_CACHE = 'maizuru-tiles-v3';
 
 // Core resources to cache immediately
 const CORE_RESOURCES = [
@@ -10,16 +10,18 @@ const CORE_RESOURCES = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
-// Pre-calculate tile URLs for Maizuru area
-// Bounds: lat 35.41-35.53, lon 135.27-135.43
+// Pre-calculate tile URLs for Maizuru area (OSM only)
+// Covers the full tourist area with detailed zoom levels
 function getTileUrls() {
   const tiles = [];
   const zoomLevels = [
     { z: 12, latRange: [35.38, 35.55], lonRange: [135.24, 135.45] },
-    { z: 13, latRange: [35.40, 35.53], lonRange: [135.26, 135.43] },
-    { z: 14, latRange: [35.41, 35.53], lonRange: [135.27, 135.43] },
-    { z: 15, latRange: [35.42, 35.52], lonRange: [135.28, 135.42] },
-    { z: 16, latRange: [35.43, 35.50], lonRange: [135.30, 135.40] }
+    { z: 13, latRange: [35.38, 35.55], lonRange: [135.24, 135.45] },
+    { z: 14, latRange: [35.40, 35.54], lonRange: [135.26, 135.44] },
+    { z: 15, latRange: [35.41, 35.53], lonRange: [135.27, 135.43] },
+    { z: 16, latRange: [35.42, 35.52], lonRange: [135.28, 135.42] },
+    { z: 17, latRange: [35.43, 35.51], lonRange: [135.30, 135.41] },
+    { z: 18, latRange: [35.44, 35.50], lonRange: [135.32, 135.40] }
   ];
 
   for (const { z, latRange, lonRange } of zoomLevels) {
@@ -31,15 +33,24 @@ function getTileUrls() {
 
     for (let x = xMin; x <= xMax; x++) {
       for (let y = yMin; y <= yMax; y++) {
-        // Japanese tiles (OpenStreetMap)
         tiles.push(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`);
-        // English tiles (CARTO Voyager)
-        const s = ['a', 'b', 'c', 'd'][Math.floor(Math.random() * 4)];
-        tiles.push(`https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`);
       }
     }
   }
   return tiles;
+}
+
+// Send progress to all clients
+async function sendProgress(current, total, phase) {
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'cache-progress',
+      current,
+      total,
+      phase
+    });
+  });
 }
 
 // Install: cache core resources and pre-fetch map tiles
@@ -49,27 +60,37 @@ self.addEventListener('install', event => {
       // Cache core resources
       const coreCache = await caches.open(CACHE_NAME);
       await coreCache.addAll(CORE_RESOURCES);
-      console.log('[SW] Core resources cached');
+      await sendProgress(0, 0, 'core-done');
 
       // Cache map tiles in batches
       const tileCache = await caches.open(TILE_CACHE);
       const tileUrls = getTileUrls();
-      console.log(`[SW] Pre-caching ${tileUrls.length} map tiles...`);
+      const total = tileUrls.length;
+      let done = 0;
+      let failed = 0;
 
-      // Fetch tiles in batches of 10 to avoid overwhelming the network
-      const batchSize = 10;
+      await sendProgress(0, total, 'tiles');
+
+      // Fetch tiles in batches of 6 to be gentle on the server
+      const batchSize = 6;
       for (let i = 0; i < tileUrls.length; i += batchSize) {
         const batch = tileUrls.slice(i, i + batchSize);
-        const results = await Promise.allSettled(
+        await Promise.allSettled(
           batch.map(url =>
             fetch(url).then(resp => {
-              if (resp.ok) return tileCache.put(url, resp);
-            }).catch(() => {})
+              if (resp.ok) {
+                return tileCache.put(url, resp);
+              } else {
+                failed++;
+              }
+            }).catch(() => { failed++; })
           )
         );
+        done += batch.length;
+        await sendProgress(done, total, 'tiles');
       }
-      console.log('[SW] Map tiles cached');
 
+      await sendProgress(total, total, 'complete');
       self.skipWaiting();
     })()
   );
@@ -85,7 +106,6 @@ self.addEventListener('activate', event => {
           .map(key => caches.delete(key))
       );
       self.clients.claim();
-      console.log('[SW] Activated and claimed clients');
     })()
   );
 });
@@ -109,7 +129,6 @@ self.addEventListener('fetch', event => {
           }
           return response;
         } catch {
-          // Return a transparent 1x1 PNG for missing tiles when offline
           return new Response(
             Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88P/BfwAJhAPkv6JaagAAAABJRU5ErkJggg=='), c => c.charCodeAt(0)),
             { headers: { 'Content-Type': 'image/png' } }
@@ -134,7 +153,6 @@ self.addEventListener('fetch', event => {
         }
         return response;
       } catch {
-        // Offline fallback
         if (event.request.destination === 'document') {
           return caches.match('./index.html');
         }

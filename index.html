@@ -628,6 +628,20 @@ body {
   </div>
 </div>
 
+<!-- Download Progress Overlay -->
+<div id="downloadOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:10000; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-family:sans-serif;">
+  <div style="text-align:center; padding:20px; max-width:90%;">
+    <div style="font-size:24px; margin-bottom:8px;">🗺️</div>
+    <div id="dlTitle" style="font-size:18px; font-weight:bold; margin-bottom:4px;">Downloading map for offline use...</div>
+    <div id="dlTitleJa" style="font-size:14px; color:#aaa; margin-bottom:16px;">オフライン用の地図をダウンロード中...</div>
+    <div style="background:#333; border-radius:10px; height:20px; width:280px; overflow:hidden; margin-bottom:10px;">
+      <div id="dlBar" style="background:#4CAF50; height:100%; width:0%; transition:width 0.3s; border-radius:10px;"></div>
+    </div>
+    <div id="dlStatus" style="font-size:14px; color:#ccc;">Preparing... / 準備中...</div>
+    <div style="margin-top:16px; font-size:12px; color:#888;">⚠️ Do not close this page / このページを閉じないでください</div>
+  </div>
+</div>
+
 <!-- GPS Button & Status -->
 <button class="gps-btn" id="gpsBtn" onclick="toggleGPS()" title="GPS">📍</button>
 <div class="gps-status" id="gpsStatus"></div>
@@ -2081,6 +2095,32 @@ document.getElementById('searchInput').addEventListener('input', function(e) {
 async function registerSW() {
   if ('serviceWorker' in navigator) {
     try {
+      // Listen for progress messages from SW
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'cache-progress') {
+          const { current, total, phase } = event.data;
+          const overlay = document.getElementById('downloadOverlay');
+          const bar = document.getElementById('dlBar');
+          const status = document.getElementById('dlStatus');
+
+          if (phase === 'core-done') {
+            overlay.style.display = 'flex';
+            status.textContent = 'Core resources cached / 基本データ取得完了';
+          } else if (phase === 'tiles') {
+            overlay.style.display = 'flex';
+            const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+            bar.style.width = pct + '%';
+            status.textContent = `Map tiles: ${current} / ${total} (${pct}%) / 地図タイル: ${current} / ${total}`;
+          } else if (phase === 'complete') {
+            bar.style.width = '100%';
+            status.textContent = '✅ Download complete! Ready for offline use / ダウンロード完了！オフラインで使えます';
+            document.getElementById('dlTitle').textContent = 'Download Complete!';
+            document.getElementById('dlTitleJa').textContent = 'ダウンロード完了！';
+            setTimeout(() => { overlay.style.display = 'none'; }, 3000);
+          }
+        }
+      });
+
       const reg = await navigator.serviceWorker.register('sw.js');
       console.log('SW registered:', reg.scope);
     } catch (e) {
