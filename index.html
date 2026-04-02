@@ -2364,6 +2364,28 @@ const BUS_LINE_DATA = {
     stops: [
       { name: '西舞鶴駅', lat: 35.4418, lng: 135.3284 },
       { name: '東舞鶴駅', lat: 35.4680, lng: 135.3943 }
+    ],
+    track: [
+      [35.4418, 135.3284],
+      [35.4417, 135.3307],
+      [35.4451, 135.3314],
+      [35.4460, 135.3319],
+      [35.4471, 135.3331],
+      [35.4481, 135.3357],
+      [35.4499, 135.3412],
+      [35.4515, 135.3464],
+      [35.4525, 135.3504],
+      [35.4529, 135.3537],
+      [35.4526, 135.3579],
+      [35.4532, 135.3598],
+      [35.4559, 135.3653],
+      [35.4583, 135.3710],
+      [35.4603, 135.3811],
+      [35.4617, 135.3864],
+      [35.4639, 135.3895],
+      [35.4662, 135.3919],
+      [35.4686, 135.3949],
+      [35.4680, 135.3943]
     ]
   }
 };
@@ -2397,7 +2419,7 @@ function showBusRoutes() {
   const isJa = currentLang === 'ja';
 
   for (const [key, route] of Object.entries(BUS_LINE_DATA)) {
-    const coords = route.stops.map(s => [s.lat, s.lng]);
+    const coords = route.track || route.stops.map(s => [s.lat, s.lng]);
     const routeName = isJa ? route.name_ja : route.name_en;
 
     // Draw polyline
