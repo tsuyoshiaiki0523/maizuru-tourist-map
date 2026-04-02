@@ -2123,6 +2123,19 @@ async function registerSW() {
 
       const reg = await navigator.serviceWorker.register('sw.js');
       console.log('SW registered:', reg.scope);
+
+      // Auto-update: check for new SW and activate immediately
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      });
+
+      // Check for updates every time the page loads
+      reg.update();
     } catch (e) {
       console.log('SW registration failed:', e);
     }
