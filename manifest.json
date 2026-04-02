@@ -1,0 +1,18 @@
+{
+  "name": "Maizuru Tourist Map / 舞鶴観光マップ",
+  "short_name": "Maizuru Map",
+  "description": "Offline tourist map for Maizuru city with 42 sightseeing spots / 舞鶴市の観光マップ（全42スポット・オフライン対応）",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a5276",
+  "theme_color": "#1a5276",
+  "orientation": "portrait",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

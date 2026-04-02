@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a5276">
+<title>Maizuru Tourist Map / 舞鶴観光マップ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --accent: #e74c3c;
+  --bg: #f5f6fa;
+  --card-bg: #ffffff;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --shadow: 0 2px 12px rgba(0,0,0,0.12);
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100dvh;
+  width: 100vw;
+}
+
+/* Header */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: var(--primary);
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  height: 52px;
+}
+.header h1 {
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.header h1 small { font-size: 11px; font-weight: 400; opacity: 0.85; display: block; }
+.lang-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.lang-btn:active { background: rgba(255,255,255,0.35); }
+
+/* Search Bar */
+.search-bar {
+  position: fixed; top: 52px; left: 0; right: 0; z-index: 999;
+  background: white;
+  padding: 8px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  display: flex;
+  gap: 8px;
+  height: 48px;
+}
+.search-input {
+  flex: 1;
+  border: 1.5px solid #ddd;
+  border-radius: 24px;
+  padding: 0 16px;
+  font-size: 14px;
+  outline: none;
+  background: var(--bg);
+}
+.search-input:focus { border-color: var(--primary-light); }
+.view-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid #ddd;
+  flex-shrink: 0;
+}
+.view-btn {
+  padding: 6px 12px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+.view-btn.active { background: var(--primary); color: white; }
+
+/* Category Filter */
+.categories {
+  position: fixed; top: 100px; left: 0; right: 0; z-index: 998;
+  background: white;
+  padding: 6px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.categories::-webkit-scrollbar { display: none; }
+.cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1.5px solid #ddd;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.cat-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.cat-btn .emoji { font-size: 14px; }
+
+/* Main Content */
+.content {
+  position: fixed;
+  top: 140px; left: 0; right: 0; bottom: 0;
+}
+
+/* Map */
+#map {
+  width: 100%; height: 100%;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+}
+.leaflet-popup-content { margin: 0 !important; min-width: 220px; }
+.popup-card { padding: 12px; }
+.popup-card h3 { font-size: 14px; margin-bottom: 2px; color: var(--primary); }
+.popup-card .popup-sub { font-size: 11px; color: var(--text-light); margin-bottom: 6px; }
+.popup-card .popup-cat { font-size: 11px; color: var(--primary-light); margin-bottom: 6px; }
+.popup-card .popup-desc { font-size: 12px; line-height: 1.5; margin-bottom: 8px; max-height: 60px; overflow: hidden; }
+.popup-detail-btn {
+  display: block; width: 100%; padding: 8px;
+  background: var(--primary); color: white;
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center;
+}
+
+/* List View */
+.list-view {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+}
+.list-view.active { display: block; }
+.spot-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.spot-card:active { transform: scale(0.98); }
+.spot-card-body { padding: 12px; }
+.spot-card-body h3 { font-size: 15px; margin-bottom: 2px; }
+.spot-card-body .card-sub { font-size: 12px; color: var(--text-light); }
+.spot-card-body .card-cats {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+}
+.spot-card-body .card-cat {
+  font-size: 10px; padding: 2px 8px;
+  background: #eaf2f8; color: var(--primary);
+  border-radius: 10px; font-weight: 500;
+}
+.spot-card-body .card-area {
+  font-size: 10px; padding: 2px 8px;
+  background: #fdebd0; color: #e67e22;
+  border-radius: 10px; font-weight: 600;
+}
+.spot-card-body .card-distance {
+  font-size: 11px; color: var(--accent); margin-top: 4px; font-weight: 600;
+}
+
+/* Detail Modal */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  justify-content: center;
+  align-items: flex-end;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: white;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 85dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-handle {
+  width: 40px; height: 4px;
+  background: #ddd; border-radius: 2px;
+  margin: 10px auto 0;
+}
+.modal-close {
+  position: absolute; top: 12px; right: 16px;
+  background: rgba(0,0,0,0.5); color: white;
+  border: none; border-radius: 50%;
+  width: 32px; height: 32px;
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+.modal-img {
+  width: 100%; height: 200px;
+  object-fit: cover;
+  background: #eee;
+  display: none;
+}
+.modal-body { padding: 16px; position: relative; }
+.modal-body h2 { font-size: 20px; margin-bottom: 2px; }
+.modal-body .modal-sub { font-size: 13px; color: var(--text-light); margin-bottom: 12px; }
+.modal-body .modal-cats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.modal-body .modal-cat {
+  font-size: 11px; padding: 3px 10px;
+  background: #eaf2f8; color: var(--primary);
+  border-radius: 12px; font-weight: 500;
+}
+
+.info-section {
+  margin-bottom: 16px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 12px;
+}
+.info-section h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.info-row {
+  display: flex;
+  padding: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.info-row:last-child { border-bottom: none; }
+.info-label {
+  font-weight: 600;
+  min-width: 80px;
+  flex-shrink: 0;
+  color: var(--text-light);
+  font-size: 12px;
+}
+.info-value { flex: 1; }
+
+.access-section {
+  background: #fef9e7;
+  border: 1.5px solid #f9e79f;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.access-section h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d4ac0d;
+  margin-bottom: 8px;
+}
+.access-method {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 8px;
+}
+.access-method .method-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.access-method .method-detail {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #555;
+}
+.access-method .method-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.desc-section {
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  color: #444;
+}
+
+/* Pier Marker */
+.pier-icon {
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.spot-icon {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  border: 2.5px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  color: white;
+  font-weight: bold;
+}
+
+/* Offline Notice */
+.offline-banner {
+  display: none;
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #27ae60; color: white;
+  padding: 8px 20px; border-radius: 24px;
+  font-size: 13px; font-weight: 600;
+  z-index: 3000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: fadeInUp 0.3s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--primary);
+  color: white;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 5000;
+  transition: opacity 0.5s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-overlay h2 { font-size: 22px; margin-bottom: 4px; }
+.loading-overlay p { font-size: 14px; opacity: 0.8; margin-bottom: 24px; }
+.loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+.loading-bar-inner { height: 100%; background: white; border-radius: 2px; transition: width 0.3s; width: 0%; }
+.loading-status { font-size: 12px; opacity: 0.7; margin-top: 12px; }
+
+/* No results */
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+}
+.no-results .emoji { font-size: 40px; margin-bottom: 12px; }
+
+/* Count badge */
+.results-count {
+  position: fixed;
+  top: 142px; right: 12px;
+  background: var(--primary);
+  color: white;
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  z-index: 999;
+  font-weight: 600;
+}
+
+/* GPS Button */
+.gps-btn {
+  position: fixed;
+  bottom: 24px; right: 16px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.gps-btn:active { transform: scale(0.92); }
+.gps-status {
+  display: none;
+  position: fixed;
+  bottom: 80px; right: 16px;
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  z-index: 999;
+  max-width: 260px;
+  white-space: pre-line;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.gps-btn.tracking { background: var(--primary-light); color: white; }
+.gps-btn.searching { animation: gpsPulse 1.5s infinite; }
+@keyframes gpsPulse {
+  0%,100% { box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+  50% { box-shadow: 0 2px 20px rgba(41,128,185,0.6); }
+}
+
+/* User location marker */
+.user-location {
+  width: 18px; height: 18px;
+  background: #4285f4;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(66,133,244,0.3), 0 2px 6px rgba(0,0,0,0.3);
+}
+.user-location-pulse {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(66,133,244,0.15);
+  border: 1px solid rgba(66,133,244,0.3);
+  animation: locPulse 2s infinite;
+}
+@keyframes locPulse {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* GPS distance badge in cards */
+.card-gps-dist {
+  font-size: 11px; color: #4285f4; font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Modal image */
+.modal-img-wrap {
+  width: 100%; height: 180px;
+  overflow: hidden; background: #eee;
+  position: relative;
+}
+.modal-img-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.modal-img-wrap .img-offline {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #2c3e50, #1a5276);
+  color: white; font-size: 40px;
+}
+
+/* YouTube embed */
+.youtube-section {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+.youtube-section iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: none;
+  display: block;
+}
+.youtube-offline {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: white; text-align: center;
+  padding: 20px;
+}
+.youtube-offline .yt-icon { font-size: 40px; margin-bottom: 8px; }
+.youtube-offline .yt-msg { font-size: 13px; opacity: 0.8; line-height: 1.5; }
+
+/* Edit Mode */
+.edit-banner {
+  display: none;
+  position: fixed; top: 52px; left: 0; right: 0;
+  background: #e74c3c; color: white;
+  padding: 6px 12px; font-size: 12px;
+  z-index: 1001; text-align: center;
+  font-weight: 600;
+}
+.edit-banner.active { display: block; }
+.edit-btn {
+  position: fixed;
+  bottom: 24px; left: 16px;
+  height: 36px;
+  border-radius: 18px;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 999;
+  padding: 0 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.edit-btn.active { background: #e74c3c; color: white; }
+.export-modal {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 3000;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.export-modal.active { display: flex; }
+.export-box {
+  background: white; border-radius: 12px;
+  padding: 16px; width: 100%; max-width: 400px;
+  max-height: 80vh;
+}
+.export-box h3 { font-size: 15px; margin-bottom: 8px; }
+.export-box textarea {
+  width: 100%; height: 200px;
+  font-family: monospace; font-size: 11px;
+  border: 1px solid #ddd; border-radius: 8px;
+  padding: 8px; resize: none;
+}
+.export-box button {
+  margin-top: 8px; padding: 8px 16px;
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.export-box .btn-copy { background: var(--primary); color: white; margin-right: 8px; }
+.export-box .btn-close { background: #eee; color: var(--text); }
+
+@media (min-width: 768px) {
+  .modal {
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: 20px;
+    max-height: 90dvh;
+  }
+  .modal-overlay { align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <h2>🚢 Maizuru Tourist Map</h2>
+  <p>舞鶴観光マップ</p>
+  <div class="loading-bar"><div class="loading-bar-inner" id="loadingBar"></div></div>
+  <div class="loading-status" id="loadingStatus">Preparing offline data...</div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <h1 id="headerTitle">Maizuru Tourist Map<small>舞鶴観光マップ</small></h1>
+  <div style="flex:1"></div>
+  <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Search -->
+<div class="search-bar">
+  <input type="text" class="search-input" id="searchInput" placeholder="Search spots... / スポットを検索...">
+  <div class="view-toggle">
+    <button class="view-btn active" id="mapViewBtn" onclick="setView('map')">🗺</button>
+    <button class="view-btn" id="listViewBtn" onclick="setView('list')">📋</button>
+  </div>
+</div>
+
+<!-- Categories -->
+<div class="categories" id="categoriesBar"></div>
+
+<!-- Results Count -->
+<div class="results-count" id="resultsCount"></div>
+
+<!-- Content -->
+<div class="content">
+  <div id="map"></div>
+  <div class="list-view" id="listView"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- GPS Button & Status -->
+<button class="gps-btn" id="gpsBtn" onclick="toggleGPS()" title="GPS">📍</button>
+<div class="gps-status" id="gpsStatus"></div>
+
+<!-- Edit Mode Button -->
+<button class="edit-btn" id="editBtn" onclick="toggleEditMode()">📐 Edit Coords</button>
+
+<!-- Edit Mode Banner -->
+<div class="edit-banner" id="editBanner">🔧 EDIT MODE: Drag markers to correct positions / 編集モード: マーカーをドラッグして位置を修正</div>
+
+<!-- Export Modal -->
+<div class="export-modal" id="exportModal">
+  <div class="export-box">
+    <h3>📋 Updated Coordinates / 更新された座標</h3>
+    <p style="font-size:11px;color:#777;margin-bottom:8px">Copy this data and send to developer / このデータをコピーして開発者に送ってください</p>
+    <textarea id="exportData" readonly></textarea>
+    <div style="display:flex;margin-top:8px">
+      <button class="btn-copy" onclick="copyExport()">📋 Copy</button>
+      <button class="btn-close" onclick="closeExport()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner">✅ Offline ready / オフライン対応済</div>
+
+<script>
+// ============================================================
+// LANGUAGE SYSTEM
+// ============================================================
+let currentLang = 'en';
+const i18n = {
+  en: {
+    searchPlaceholder: 'Search spots...',
+    all: 'All',
+    fromPier: 'From Cruise Pier (2nd Pier)',
+    walk: 'Walk',
+    bus: 'Bus',
+    taxi: 'Taxi',
+    car: 'Car',
+    minutes: 'min',
+    hours: 'hrs',
+    distance: 'Distance',
+    time: 'Est. Time',
+    address: 'Address',
+    phone: 'Phone',
+    openHours: 'Hours',
+    closedDay: 'Closed',
+    fee: 'Fee',
+    parking: 'Parking',
+    website: 'Website',
+    free: 'Free',
+    available: 'Available',
+    details: 'View Details',
+    noResults: 'No spots found',
+    tryAnother: 'Try a different search or category',
+    pierName: 'Maizuru Port 2nd Pier (Cruise Terminal)',
+    offlineReady: '✅ Offline ready',
+    loading: 'Preparing offline data...',
+    basicInfo: 'Basic Information',
+    accessInfo: 'Access from Cruise Pier',
+    about: 'About',
+    busNote: 'Take bus from Nishi-Maizuru Sta.',
+    trainNote: 'JR Maizuru Line',
+    area: 'Area',
+    eastMaizuru: 'East Maizuru',
+    westMaizuru: 'West Maizuru',
+    spots: 'spots',
+    gpsOn: 'GPS tracking ON',
+    gpsOff: 'GPS tracking OFF',
+    gpsUnavailable: 'GPS not available',
+    fromHere: 'From your location',
+    yourLocation: 'You are here',
+    categories: {
+      scenery: 'Scenery', cruise_ship: 'Cruise', temple: 'Temples', fishing: 'Fishing',
+      beach: 'Beach', flower: 'Flowers', castle: 'Castle', military: 'Naval/SDF',
+      museum: 'Museum', archive: 'Archive', onsen: 'Hot Spring', sento: 'Bath House',
+      enzyme: 'Wellness', cinema: 'Cinema', park: 'Park', sakura: 'Cherry Blossom',
+      autumn: 'Autumn Leaves', music: 'Music', historic: 'Historic Site'
+    }
+  },
+  ja: {
+    searchPlaceholder: 'スポットを検索...',
+    all: 'すべて',
+    fromPier: '前島埠頭（第二埠頭）からのアクセス',
+    walk: '徒歩',
+    bus: 'バス',
+    taxi: 'タクシー',
+    car: '車',
+    minutes: '分',
+    hours: '時間',
+    distance: '距離',
+    time: '所要時間',
+    address: '住所',
+    phone: '電話',
+    openHours: '営業時間',
+    closedDay: '定休日',
+    fee: '料金',
+    parking: '駐車場',
+    website: 'ウェブサイト',
+    free: '無料',
+    available: 'あり',
+    details: '詳細を見る',
+    noResults: 'スポットが見つかりません',
+    tryAnother: '別の検索やカテゴリーをお試しください',
+    pierName: '舞鶴港 前島埠頭（第二埠頭・クルーズ船ターミナル）',
+    offlineReady: '✅ オフライン対応済み',
+    loading: 'オフラインデータを準備中...',
+    basicInfo: '基本情報',
+    accessInfo: '前島埠頭からのアクセス',
+    about: '概要',
+    busNote: '西舞鶴駅からバス',
+    trainNote: 'JR舞鶴線',
+    area: 'エリア',
+    eastMaizuru: '東舞鶴',
+    westMaizuru: '西舞鶴',
+    spots: '件',
+    gpsOn: 'GPS追跡 ON',
+    gpsOff: 'GPS追跡 OFF',
+    gpsUnavailable: 'GPSが利用できません',
+    fromHere: '現在地から',
+    yourLocation: '現在地',
+    categories: {
+      scenery: '景色', cruise_ship: '遊覧船', temple: '寺社仏閣', fishing: '釣り',
+      beach: '海水浴', flower: '花', castle: '城', military: '自衛隊施設',
+      museum: '博物館', archive: '資料館', onsen: '日帰り温泉', sento: '銭湯',
+      enzyme: '酵素風呂', cinema: '映画', park: '公園', sakura: '桜',
+      autumn: '紅葉', music: '音楽', historic: '名所・史跡'
+    }
+  }
+};
+
+function t(key) {
+  const keys = key.split('.');
+  let val = i18n[currentLang];
+  for (const k of keys) { val = val?.[k]; }
+  return val || key;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ja' : 'en';
+  document.getElementById('langBtn').textContent = currentLang === 'en' ? 'EN' : 'JA';
+  document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+  // Switch map tiles to match language
+  if (map && currentTileLayer) {
+    setMapTiles();
+    addPierMarker();
+  }
+  renderCategories();
+  renderMarkers();
+  renderList();
+  updateResultsCount();
+}
+
+// Parse bilingual access string: "日本語 / English" → correct language
+function localizeAccess(str) {
+  if (!str) return null;
+  const parts = str.split(' / ');
+  if (parts.length >= 2) {
+    return currentLang === 'ja' ? parts[0].trim() : parts[parts.length - 1].trim();
+  }
+  return str; // single language, return as-is
+}
+
+// ============================================================
+// GPS TRACKING
+// ============================================================
+let gpsActive = false;
+let gpsWatchId = null;
+let userMarker = null;
+let userAccuracy = null;
+let userLat = null, userLng = null;
+
+function toggleGPS() {
+  if (gpsActive) {
+    stopGPS();
+  } else {
+    startGPS();
+  }
+}
+
+function startGPS() {
+  const btn = document.getElementById('gpsBtn');
+  const statusEl = document.getElementById('gpsStatus');
+
+  function showGPSStatus(text) {
+    statusEl.textContent = text;
+    statusEl.style.display = 'block';
+  }
+
+  // Check HTTPS (required for geolocation on mobile)
+  const proto = location.protocol;
+  const host = location.hostname;
+  const isSecure = proto === 'https:' || host === 'localhost' || host === '127.0.0.1';
+  if (!isSecure) {
+    showGPSStatus(currentLang === 'ja'
+      ? '⚠️ GPSにはHTTPS接続が必要です\n\n現在: ' + proto + '//' + host + '\n\nHTTPS環境でアクセスしてください'
+      : '⚠️ GPS requires HTTPS\n\nCurrent: ' + proto + '//' + host + '\n\nPlease access via HTTPS');
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    showGPSStatus(currentLang === 'ja' ? '⚠️ このブラウザはGPS非対応です' : '⚠️ GPS not supported');
+    return;
+  }
+
+  btn.classList.add('searching');
+  showGPSStatus(currentLang === 'ja' ? '📡 GPS検索中... 位置情報の許可を確認してください' : '📡 Searching GPS... Please allow location access');
+
+  // First try with high accuracy
+  navigator.geolocation.getCurrentPosition(onGPSSuccess, onGPSFirstError,
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+
+  function onGPSSuccess(pos) {
+    gpsActive = true;
+    btn.classList.remove('searching');
+    btn.classList.add('tracking');
+    btn.textContent = '📍';
+    showGPSStatus(currentLang === 'ja'
+      ? `✅ GPS追跡中 (精度: ${Math.round(pos.coords.accuracy)}m)`
+      : `✅ GPS tracking (accuracy: ${Math.round(pos.coords.accuracy)}m)`);
+    // Hide status after 3s
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+    updateUserPosition(pos);
+    // Start continuous tracking
+    gpsWatchId = navigator.geolocation.watchPosition(
+      (p) => {
+        updateUserPosition(p);
+      },
+      (err) => {
+        showGPSStatus(currentLang === 'ja'
+          ? `⚠️ GPS信号ロスト (code:${err.code})`
+          : `⚠️ GPS signal lost (code:${err.code})`);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 }
+    );
+  }
+
+  function onGPSFirstError(err) {
+    // Retry with low accuracy as fallback
+    showGPSStatus(currentLang === 'ja'
+      ? `📡 高精度GPS失敗(code:${err.code})... 低精度で再試行中`
+      : `📡 High accuracy failed(code:${err.code})... Retrying low accuracy`);
+
+    navigator.geolocation.getCurrentPosition(onGPSSuccess,
+      (err2) => {
+        btn.classList.remove('searching');
+        let msg;
+        if (err2.code === 1) {
+          msg = currentLang === 'ja'
+            ? '❌ 位置情報が拒否されました\n\nブラウザの設定 → サイトの設定 → 位置情報 → 許可 に変更してページを再読み込みしてください'
+            : '❌ Location denied\n\nGo to browser Settings → Site Settings → Location → Allow, then reload';
+        } else if (err2.code === 2) {
+          msg = currentLang === 'ja'
+            ? '❌ 位置情報を取得できません\n\nスマホの設定で位置情報サービスをONにしてください'
+            : '❌ Position unavailable\n\nTurn on Location Services in phone Settings';
+        } else {
+          msg = currentLang === 'ja'
+            ? '❌ GPSタイムアウト\n\n屋外に出て📍ボタンを再度押してください'
+            : '❌ GPS timed out\n\nGo outside and tap 📍 button again';
+        }
+        showGPSStatus(msg);
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 120000 }
+    );
+  }
+}
+
+function stopGPS() {
+  gpsActive = false;
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  if (userMarker) {
+    map.removeLayer(userMarker);
+    userMarker = null;
+  }
+  if (userAccuracy) {
+    map.removeLayer(userAccuracy);
+    userAccuracy = null;
+  }
+  userLat = null;
+  userLng = null;
+  const btn = document.getElementById('gpsBtn');
+  btn.classList.remove('tracking', 'searching');
+  btn.textContent = '📍';
+  document.getElementById('gpsStatus').style.display = 'none';
+  showBanner(t('gpsOff'));
+  renderList(); // Remove GPS distances
+}
+
+function updateUserPosition(pos) {
+  userLat = pos.coords.latitude;
+  userLng = pos.coords.longitude;
+  const acc = pos.coords.accuracy;
+
+  // Create/update accuracy circle
+  if (userAccuracy) {
+    userAccuracy.setLatLng([userLat, userLng]);
+    userAccuracy.setRadius(Math.min(acc, 200));
+  } else {
+    userAccuracy = L.circle([userLat, userLng], {
+      radius: Math.min(acc, 200),
+      color: '#4285f4',
+      fillColor: '#4285f4',
+      fillOpacity: 0.1,
+      weight: 1
+    }).addTo(map);
+  }
+
+  // Create/update user marker
+  const userIcon = L.divIcon({
+    html: '<div class="user-location"></div>',
+    className: '',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  if (userMarker) {
+    userMarker.setLatLng([userLat, userLng]);
+  } else {
+    userMarker = L.marker([userLat, userLng], { icon: userIcon, zIndexOffset: 1000 })
+      .bindPopup(`<div class="popup-card"><h3>📍 ${t('yourLocation')}</h3></div>`)
+      .addTo(map);
+    // Pan to user on first fix
+    map.setView([userLat, userLng], 15);
+  }
+
+  // Re-render list with GPS distances
+  renderList();
+}
+
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatDist(km) {
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  return `${km.toFixed(1)}km`;
+}
+
+function showBanner(text) {
+  const banner = document.getElementById('offlineBanner');
+  banner.textContent = text;
+  banner.style.display = 'block';
+  const duration = text.includes('⚠️') ? 5000 : 2500;
+  clearTimeout(window._bannerTimer);
+  window._bannerTimer = setTimeout(() => { banner.style.display = 'none'; }, duration);
+}
+
+// ============================================================
+// CATEGORY DEFINITIONS
+// ============================================================
+const CATEGORIES = [
+  { id: 'all', emoji: '📍' },
+  { id: 'scenery', emoji: '🏔' },
+  { id: 'cruise_ship', emoji: '🚢' },
+  { id: 'temple', emoji: '⛩' },
+  { id: 'castle', emoji: '🏯' },
+  { id: 'military', emoji: '⚓' },
+  { id: 'museum', emoji: '🏛' },
+  { id: 'archive', emoji: '📚' },
+  { id: 'historic', emoji: '🏛' },
+  { id: 'park', emoji: '🌳' },
+  { id: 'sakura', emoji: '🌸' },
+  { id: 'flower', emoji: '🌺' },
+  { id: 'autumn', emoji: '🍁' },
+  { id: 'beach', emoji: '🏖' },
+  { id: 'onsen', emoji: '♨️' },
+  { id: 'sento', emoji: '🛁' },
+  { id: 'enzyme', emoji: '💆' },
+  { id: 'fishing', emoji: '🎣' },
+  { id: 'cinema', emoji: '🎬' },
+  { id: 'music', emoji: '🎵' },
+];
+
+const CAT_COLORS = {
+  scenery: '#2ecc71', cruise_ship: '#3498db', temple: '#8e44ad', fishing: '#1abc9c',
+  beach: '#f39c12', flower: '#e91e63', castle: '#795548', military: '#34495e',
+  museum: '#e67e22', archive: '#9b59b6', onsen: '#e74c3c', sento: '#00bcd4',
+  enzyme: '#ff69b4', cinema: '#607d8b', park: '#4caf50', sakura: '#ff80ab',
+  autumn: '#ff5722', music: '#673ab7', historic: '#795548', all: '#1a5276'
+};
+
+// ============================================================
+// SPOT DATA - All 42 spots
+// ============================================================
+const PIER_LOCATION = { lat: 35.4565, lng: 135.3265 };
+
+const SPOTS = [
+  {
+    id: 1, name_ja: 'まいづるサンセットクルーズ', name_en: 'Maizuru Sunset Cruise',
+    area: 'east',
+    lat: 35.4757, lng: 135.3873,
+    categories: ['cruise_ship', 'scenery'],
+    address: '〒625-0080 京都府舞鶴市北吸（赤れんがパーク内）',
+    phone: '090-5978-8711',
+    hours_ja: '9:00～出航時間まで（運航日限定）', hours_en: '9:00 - departure (limited sailing days)',
+    closed_ja: '不定期運航', closed_en: 'Irregular schedule',
+    fee_ja: '大人2,000円 / こども1,000円', fee_en: 'Adults ¥2,000 / Children ¥1,000',
+    parking_ja: '赤れんがパーク駐車場', parking_en: 'Akarenga Park parking',
+    desc_ja: '夕日に染まる幻想的な風景と護衛艦を楽しむクルーズ。日没時に自衛艦旗の降下に合わせて吹奏される「ラッパ君が代」を鑑賞できます。所要時間約30分。',
+    desc_en: 'A cruise to enjoy the fantastic sunset scenery and escort ships. Watch the lowering of the naval ensign flag at sunset accompanied by the bugle call. Duration: ~30 min.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅（約10分）→徒歩20分 / Nishi-Maizuru Sta→JR Higashi-Maizuru(10min)→walk 20min', taxi: '約25分 / ~25 min', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/IMG_9205-1024x683.jpg'
+  },
+  {
+    id: 2, name_ja: '舞鶴赤れんがパーク', name_en: 'Maizuru Red Brick Park',
+    area: 'east',
+    lat: 35.4757, lng: 135.3873,
+    categories: ['scenery', 'museum', 'park'],
+    address: '〒625-0080 京都府舞鶴市北吸1039-2',
+    phone: '0773-66-1096',
+    hours_ja: '外観見学自由 / 館内 9:00～17:00', hours_en: 'Exterior: anytime / Interior: 9:00-17:00',
+    closed_ja: '年末年始', closed_en: 'Year-end/New Year holidays',
+    fee_ja: '見学無料（博物館は有料）', fee_en: 'Free (museum has fee)',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '日本遺産。明治時代から残る海軍倉庫群で、8棟の赤れんが倉庫のうち5棟が改装。カフェやお土産売り場、展示施設があります。重要文化財。',
+    desc_en: 'Japan Heritage site. Naval warehouses from the Meiji era - 5 of 8 red brick buildings renovated. Cafes, souvenir shops, and exhibition spaces. Important Cultural Property.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩20分 / Nishi-Maizuru→JR Higashi-Maizuru→walk 20min', taxi: '約25分 / ~25 min', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2022/12/1D1A6055-1.jpg'
+  },
+  {
+    id: 3, name_ja: '舞鶴市立赤れんが博物館', name_en: 'Maizuru Red Brick Museum',
+    area: 'east',
+    lat: 35.4755, lng: 135.3880,
+    categories: ['museum'],
+    address: '〒625-0036 京都府舞鶴市字浜2011',
+    phone: '0773-66-1095',
+    hours_ja: '9:00～17:00（入館16:30まで）', hours_en: '9:00-17:00 (last entry 16:30)',
+    closed_ja: '年末年始', closed_en: 'Year-end/New Year holidays',
+    fee_ja: '一般400円 / 学生150円', fee_en: 'Adults ¥400 / Students ¥150',
+    parking_ja: '赤れんがパーク駐車場', parking_en: 'Akarenga Park parking',
+    desc_ja: '現存する日本最古級の鉄骨れんが建造物。明治36年建築の魚雷庫を活用。国の重要文化財。れんがの歴史と世界各国のれんがを展示。',
+    desc_en: 'One of Japan\'s oldest existing steel-brick buildings. A torpedo warehouse built in 1903. Important Cultural Property displaying the history of bricks worldwide.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩20分', taxi: '約25分 / ~25 min', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/1D1A6318-1024x683.jpg'
+  },
+  {
+    id: 4, name_ja: '舞鶴市政記念館', name_en: 'Maizuru City Memorial Hall',
+    area: 'east',
+    lat: 35.4758, lng: 135.3870,
+    categories: ['archive'],
+    address: '〒625-0080 京都府舞鶴市字北吸1039-2',
+    phone: '0773-66-1096',
+    hours_ja: '9:00～17:00', hours_en: '9:00-17:00',
+    closed_ja: '年末年始', closed_en: 'Year-end/New Year holidays',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '明治35年に旧海軍の兵器廠倉庫として建設された赤れんが倉庫の一つ。戦後は市庁舎として使われ、現在はアート・展示スペース。',
+    desc_en: 'One of the red brick warehouses built as a naval arsenal in 1902. After WWII used as city hall, now an art and exhibition space.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩20分', taxi: '約25分', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/siseikinennkan-1024x803.jpg'
+  },
+  {
+    id: 5, name_ja: '海軍ゆかりの港めぐり遊覧船', name_en: 'Naval Port Cruise',
+    area: 'east',
+    lat: 35.4760, lng: 135.3868,
+    categories: ['cruise_ship', 'scenery'],
+    address: '〒625-0080 京都府舞鶴市北吸1039-2（赤れんがパーク内）',
+    phone: '090-5978-8711',
+    hours_ja: '9:00～17:00', hours_en: '9:00-17:00',
+    closed_ja: '不定', closed_en: 'Irregular',
+    fee_ja: '大人1,800円 / こども900円', fee_en: 'Adults ¥1,800 / Children ¥900',
+    parking_ja: '赤れんがパーク', parking_en: 'Akarenga Park',
+    desc_ja: '護衛艦や造船所など海軍ゆかりのスポットを海上から眺めるクルーズ。所要時間約30分。',
+    desc_en: 'A cruise viewing naval-related spots including escort ships and shipyards from the sea. Duration: ~30 min.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩20分', taxi: '約25分', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/cruise.jpg'
+  },
+  {
+    id: 6, name_ja: '北吸係留所', name_en: 'Kitasui Mooring Pier (JMSDF)',
+    area: 'east',
+    lat: 35.4730, lng: 135.3850,
+    categories: ['military'],
+    address: '〒625-0087 京都府舞鶴市余部下1190',
+    phone: '0773-62-2250（海上自衛隊 広報係）',
+    hours_ja: '不定期（特別公開日あり）', hours_en: 'Irregular (special open days)',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '迫力満点の護衛艦が停泊する舞鶴の必見スポット。国道27号線沿いの自衛隊桟橋に最新鋭の護衛艦が停泊。',
+    desc_en: 'A must-see spot where impressive JMSDF escort ships are moored. State-of-the-art vessels can be observed along Route 27.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩15分', taxi: '約24分', dist: '10.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/PH766_1-1024x683.jpg'
+  },
+  {
+    id: 7, name_ja: '北吸トンネル', name_en: 'Kitasui Tunnel',
+    area: 'east',
+    lat: 35.4745, lng: 135.3860,
+    categories: ['historic', 'scenery'],
+    address: '〒625-0080 京都府舞鶴市北吸740',
+    phone: '—',
+    hours_ja: '見学自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '明治37年建設。イギリス積みのれんがトンネル。当時は鉄道が走り海軍施設の物資運搬に使用。現在は自転車・歩行者道路。国の登録有形文化財。',
+    desc_en: 'Built in 1904. A brick tunnel using English bond style. Originally a railway for naval supplies, now a pedestrian/bicycle path. Registered Tangible Cultural Property.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩18分', taxi: '約25分', dist: '10.3km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/7O1A7699-1024x683.jpg'
+  },
+  {
+    id: 8, name_ja: '海軍記念館', name_en: 'Naval Memorial Museum',
+    area: 'east',
+    lat: 35.4732, lng: 135.3845,
+    categories: ['military', 'archive'],
+    address: '〒625-0087 京都府舞鶴市余部下1190',
+    phone: '0773-62-2250（内線2208）',
+    hours_ja: '土日祝 10:00～15:00（最終受付14:30）', hours_en: 'Sat/Sun/Holidays 10:00-15:00 (last entry 14:30)',
+    closed_ja: '平日', closed_en: 'Weekdays',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '昭和8年建造の旧海軍機関学校大講堂を利用した資料館。旧日本海軍関係の記念品・資料200点以上を展示。',
+    desc_en: 'Museum in a former naval academy lecture hall built in 1933. Displays over 200 items and documents related to the Imperial Japanese Navy.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩15分', taxi: '約24分', dist: '10.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/kinennkan1-1024x672.jpg'
+  },
+  {
+    id: 9, name_ja: '東郷邸', name_en: 'Togo Residence',
+    area: 'east',
+    lat: 35.4728, lng: 135.3848,
+    categories: ['military', 'historic'],
+    address: '〒625-0087 京都府舞鶴市余部下1200',
+    phone: '0773-62-2250（内線2208）',
+    hours_ja: '毎月第1日曜 10:00～15:00', hours_en: '1st Sunday of each month 10:00-15:00',
+    closed_ja: '第1日曜以外は非公開', closed_en: 'Closed except 1st Sunday',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '舞鶴鎮守府初代司令長官・東郷平八郎が明治34年から2年間過ごした官邸。歴代長官の官邸として終戦時まで使用。',
+    desc_en: 'Official residence where Admiral Togo Heihachiro, first commander of Maizuru Naval District, lived from 1901 for 2 years.',
+    access: { walk: null, bus: '西舞鶴駅→JR東舞鶴駅→徒歩15分', taxi: '約24分', dist: '10.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/東郷亭外観-1024x710.jpg'
+  },
+  {
+    id: 10, name_ja: '舞鶴引揚記念館', name_en: 'Maizuru Repatriation Memorial Museum',
+    area: 'east',
+    lat: 35.4950, lng: 135.4050,
+    categories: ['museum', 'archive'],
+    address: '〒625-0133 京都府舞鶴市字平1584',
+    phone: '0773-68-0836',
+    hours_ja: '9:00～17:00（入館16:30まで）', hours_en: '9:00-17:00 (last entry 16:30)',
+    closed_ja: '毎週水曜（祝日の場合は翌平日）、年末年始', closed_en: 'Wednesdays (next weekday if holiday), Year-end/NY',
+    fee_ja: '一般400円 / 学生150円', fee_en: 'Adults ¥400 / Students ¥150',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '「岸壁の母」で知られる引き揚げの歴史を伝える記念館。13年間で66万人以上の引揚者と1万6千柱の遺骨を迎え入れた舞鶴の平和と戦後史を展示。',
+    desc_en: 'Museum telling the history of post-WWII repatriation. Over 660,000 returnees were received in Maizuru over 13 years. UNESCO Memory of the World registered documents.',
+    access: { walk: null, bus: '東舞鶴駅からバス約20分 / Bus from Higashi-Maizuru ~20min', taxi: '約35分 / ~35 min', dist: '15km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/1D1A9471-1024x683.jpg'
+  },
+  {
+    id: 11, name_ja: '舞鶴クレインブリッジ', name_en: 'Maizuru Crane Bridge',
+    area: 'east',
+    lat: 35.4920, lng: 135.4020,
+    categories: ['scenery'],
+    address: '〒625-0133 京都府舞鶴市平',
+    phone: '—',
+    hours_ja: '通行自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '日本海側最大級の斜張橋。全長735m、水面からの高さ95m。二羽の鶴をイメージして設計。',
+    desc_en: 'One of the largest cable-stayed bridges on the Sea of Japan side. 735m long, 95m above water. Designed to resemble two cranes.',
+    access: { walk: null, bus: '東舞鶴駅からバス / Bus from Higashi-Maizuru Sta.', taxi: '約30分 / ~30 min', dist: '14km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/クレインブリッジ-1024x712.jpg'
+  },
+  {
+    id: 12, name_ja: '舞鶴親海公園', name_en: 'Maizuru Shinkai Park',
+    area: 'east',
+    lat: 35.5050, lng: 135.4100,
+    categories: ['park', 'fishing', 'scenery'],
+    address: '〒625-0135 京都府舞鶴市千歳',
+    phone: '0773-68-1663（レストラン）',
+    hours_ja: '—', hours_en: '—',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '舞鶴湾の入口に整備された海岸公園。釣りやレストラン「海鮮黒ハヤシライス」を楽しめる。船舶型施設「エル・マール まいづる」ではプラネタリウムも。',
+    desc_en: 'Seaside park at the entrance of Maizuru Bay. Enjoy fishing and the "Seafood Black Hayashi Rice" at the restaurant. "El Mar Maizuru" features a planetarium.',
+    access: { walk: null, bus: '東舞鶴駅からバス約30分 / Bus from Higashi-Maizuru ~30min', taxi: '約40分 / ~40 min', dist: '18km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/親海公園-1024x729.jpg'
+  },
+  {
+    id: 13, name_ja: '舞鶴ふるるファーム', name_en: 'Maizuru Fururu Farm',
+    area: 'east',
+    lat: 35.5100, lng: 135.4150,
+    categories: ['park', 'scenery'],
+    address: '〒625-0137 京都府舞鶴市字瀬崎60',
+    phone: '0773-68-0233',
+    hours_ja: '施設により異なる（レストラン11:00-15:00等）', hours_en: 'Varies (Restaurant 11:00-15:00 etc.)',
+    closed_ja: '毎週火曜・第3木曜', closed_en: 'Tuesdays & 3rd Thursday',
+    fee_ja: '入場無料', fee_en: 'Free admission',
+    parking_ja: '70台', parking_en: '70 spaces',
+    desc_ja: '自然に恵まれた農園レジャースポット。農村レストラン、手づくりパン教室、宿泊コテージ、ポニー乗馬体験が楽しめます。',
+    desc_en: 'A farm leisure spot blessed with nature. Farm restaurant, bread-making classes, cottages, and pony riding experiences.',
+    access: { walk: null, bus: '東舞鶴駅からバス約35分 / Bus from Higashi-Maizuru ~35min', taxi: '約40分 / ~40 min', dist: '19km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/看板-1024x683.jpg'
+  },
+  {
+    id: 14, name_ja: '舞鶴自然文化園', name_en: 'Maizuru Nature & Culture Park',
+    area: 'east',
+    lat: 35.5020, lng: 135.3980,
+    categories: ['flower', 'autumn', 'park'],
+    address: '〒625-0152 京都府舞鶴市字多称寺24-12',
+    phone: '0773-66-1053',
+    hours_ja: '開園期間のみ（ツバキ3月/アジサイ6月/紅葉11月）', hours_en: 'Open seasonally (Camellia Mar/Hydrangea Jun/Autumn Nov)',
+    closed_ja: '開園期間外は休園', closed_en: 'Closed outside season',
+    fee_ja: '大人500円 / 小中学生250円', fee_en: 'Adults ¥500 / Children ¥250',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '春にはツバキ、夏にはアジサイ、秋には紅葉の美しい風景を楽しめる公園。',
+    desc_en: 'A park with beautiful camellias in spring, hydrangeas in summer, and autumn foliage in fall.',
+    access: { walk: null, bus: '東舞鶴駅からバス約25分 / Bus from Higashi-Maizuru ~25min', taxi: '約35分 / ~35 min', dist: '16km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/【自然文化園からいただいた写真】アジサイ2-1024x768.jpg'
+  },
+  {
+    id: 15, name_ja: '青葉山ろく公園', name_en: 'Aobasan-roku Park',
+    area: 'east',
+    lat: 35.4400, lng: 135.4200,
+    categories: ['park'],
+    address: '〒625-0015 京都府舞鶴市岡安',
+    phone: '0773-64-5454',
+    hours_ja: '9:00～17:00', hours_en: '9:00-17:00',
+    closed_ja: '施設により異なる', closed_en: 'Varies by facility',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '若狭富士・青葉山のふもとに広がるレジャー施設。パターゴルフや陶芸館など、家族で1日中楽しめます。',
+    desc_en: 'A leisure area at the foot of Mt. Aoba (Wakasa Fuji). Enjoy putter golf, pottery studio, and more for families.',
+    access: { walk: null, bus: '東舞鶴駅からバス約30分 / Bus from Higashi-Maizuru ~30min', taxi: '約35分 / ~35 min', dist: '16km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/PH361_1.jpg'
+  },
+  {
+    id: 16, name_ja: '多禰寺', name_en: 'Tane-ji Temple',
+    area: 'east',
+    lat: 35.5080, lng: 135.3950,
+    categories: ['temple'],
+    address: '〒625-0152 京都府舞鶴市多祢寺346',
+    phone: '0773-68-0026',
+    hours_ja: '9:00～17:00（冬季16:00まで）', hours_en: '9:00-17:00 (winter until 16:00)',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '宝物殿拝観500円', fee_en: 'Treasure Hall ¥500',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '飛鳥時代に麻呂子親王が薬師瑠璃光如来を安置したことに起源を持つ古寺。西国薬師霊場30番札所。',
+    desc_en: 'An ancient temple originating from Prince Maroko enshrining the Healing Buddha in the Asuka period. 30th temple of the Saigoku Yakushi Pilgrimage.',
+    access: { walk: null, bus: '東舞鶴駅からバス約30分 / Bus from Higashi-Maizuru ~30min', taxi: '約38分 / ~38 min', dist: '17km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/多禰寺-1024x673.jpg'
+  },
+  {
+    id: 17, name_ja: '松尾寺', name_en: 'Matsunoo-dera Temple',
+    area: 'east',
+    lat: 35.4380, lng: 135.4100,
+    categories: ['temple'],
+    address: '〒625-0010 京都府舞鶴市字松尾532',
+    phone: '0773-62-2900',
+    hours_ja: '8:00～17:00', hours_en: '8:00-17:00',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '宝物殿800円（要問合せ）', fee_en: 'Treasure Hall ¥800 (inquire)',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '西国霊場第29番札所。馬頭観音を本尊とし、「仏舞」は京都府無形文化財（毎年5月8日奉納）。',
+    desc_en: '29th temple of Saigoku Pilgrimage. Famous for "Butsumai" (Buddha Dance), an Intangible Cultural Property of Kyoto Prefecture (performed May 8).',
+    access: { walk: null, bus: 'JR松尾寺駅から徒歩50分 / Walk 50min from JR Matsunoo-dera Sta.', taxi: '約30分 / ~30 min', dist: '15km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/松尾寺本堂１-1024x673.jpg'
+  },
+  {
+    id: 18, name_ja: '松尾寺駅前観光交流施設', name_en: 'Matsunoo-dera Station Tourist Center',
+    area: 'east',
+    lat: 35.4350, lng: 135.4080,
+    categories: ['historic'],
+    address: '〒625-0011 京都府舞鶴市吉坂',
+    phone: '0773-66-1024',
+    hours_ja: '案内所 5:00～22:00 / 茶店 9:00～16:30', hours_en: 'Info 5:00-22:00 / Tea shop 9:00-16:30',
+    closed_ja: '茶店: 日曜・月曜', closed_en: 'Tea shop: Sun/Mon',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: 'JR松尾寺駅の大正11年開業当時の旧駅舎をリニューアルした施設。大正浪漫あふれるノスタルジックな雰囲気。日本茶専門店あり。',
+    desc_en: 'Renovated Taisho-era (1922) former station building. Nostalgic atmosphere with a Japanese tea specialty shop.',
+    access: { walk: null, bus: 'JR松尾寺駅下車すぐ / At JR Matsunoo-dera Sta.', taxi: '約28分 / ~28 min', dist: '14km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/松尾寺駅-768x1024.jpg'
+  },
+  {
+    id: 19, name_ja: '金剛院', name_en: 'Kongo-in Temple',
+    area: 'east',
+    lat: 35.4480, lng: 135.4150,
+    categories: ['temple', 'autumn'],
+    address: '〒625-0014 京都府舞鶴市鹿原595',
+    phone: '0773-62-1180',
+    hours_ja: '9:00～16:00', hours_en: '9:00-16:00',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '入山300円 / 宝物殿500円（要予約）', fee_en: 'Admission ¥300 / Treasure Hall ¥500 (reservation)',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '平安時代に高岳親王により開かれた古刹。国重要文化財の三重塔、快慶作の深沙大将立像を所蔵。紅葉の名所。関西花の寺3番札所。',
+    desc_en: 'Ancient temple founded by Prince Takaoka in the Heian period. Houses a three-story pagoda (National Important Cultural Property) and a statue by master sculptor Kaikei. Famous for autumn leaves.',
+    access: { walk: null, bus: 'JR松尾寺駅から徒歩15分 / Walk 15min from JR Matsunoo-dera Sta.', taxi: '約30分 / ~30 min', dist: '15km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/konngouinn4-1024x684.jpg'
+  },
+  {
+    id: 20, name_ja: '五老スカイタワー', name_en: 'Goro Sky Tower',
+    area: 'west',
+    lat: 35.4530, lng: 135.3600,
+    categories: ['scenery'],
+    address: '〒624-0912 京都府舞鶴市上安237',
+    phone: '0773-66-2582',
+    hours_ja: '4-11月: 平日9:00-19:00/土日祝9:00-21:00 / 12-3月: 9:00-17:00', hours_en: 'Apr-Nov: Weekday 9-19/Weekend 9-21 / Dec-Mar: 9-17',
+    closed_ja: '無休', closed_en: 'Open daily',
+    fee_ja: '大人300円 / 小中学生150円', fee_en: 'Adults ¥300 / Children ¥150',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '標高301mの五老岳頂上にそびえる高さ50mの展望タワー。海抜325mから360度パノラマビュー。「近畿百景第1位」。',
+    desc_en: 'A 50m observation tower atop Mt. Goro (301m). 360-degree panoramic view from 325m above sea level. Ranked #1 in "Kinki Top 100 Views".',
+    access: { walk: null, bus: '—', taxi: '約15分 / ~15 min', dist: '6km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/goroskytower.jpg'
+  },
+  {
+    id: 21, name_ja: '田辺城資料館', name_en: 'Tanabe Castle Museum',
+    area: 'west',
+    lat: 35.4470, lng: 135.3320,
+    categories: ['castle', 'archive', 'park', 'sakura'],
+    address: '〒624-0853 京都府舞鶴市字南田辺15-22',
+    phone: '0773-76-7211',
+    hours_ja: '9:00～17:00（入館16:30まで）', hours_en: '9:00-17:00 (last entry 16:30)',
+    closed_ja: '毎週月曜（祝日の場合は翌々日）、祝日の翌日、年末年始', closed_en: 'Mondays, day after holidays, Year-end/NY',
+    fee_ja: '大人200円 / 学生100円', fee_en: 'Adults ¥200 / Students ¥100',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '関ヶ原の前哨戦となった田辺城籠城の歴史を紹介。細川幽斎を中心とした歴代城主や城下町の歴史を展示。御城印販売中（300円）。',
+    desc_en: 'Museum about the siege of Tanabe Castle, a prelude to the Battle of Sekigahara. Exhibits on Hosokawa Yusai and the castle town history. Castle seal available (¥300).',
+    access: { walk: '徒歩約15分 / Walk ~15 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/tanabejyo-west.jpg'
+  },
+  {
+    id: 22, name_ja: '明倫館正門', name_en: 'Meirinkan Gate',
+    area: 'west',
+    lat: 35.4490, lng: 135.3310,
+    categories: ['historic'],
+    address: '〒624-0855 舞鶴市北田辺128-1（明倫小学校）',
+    phone: '—',
+    hours_ja: '外観見学自由（普段は閉門）', hours_en: 'Exterior viewing only (usually closed)',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '田辺藩の藩校・明倫館の門を移築したもの。現在は明倫小学校の門として使用。入学式や卒業式に開門。',
+    desc_en: 'Relocated gate from the Tanabe Domain school "Meirinkan". Now used as the gate for Meirin Elementary School. Opens for entrance/graduation ceremonies.',
+    access: { walk: '徒歩約13分 / Walk ~13 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.0km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/03/S__36741143-1024x768.jpg'
+  },
+  {
+    id: 23, name_ja: '郷土資料館', name_en: 'Local History Museum',
+    area: 'west',
+    lat: 35.4468, lng: 135.3315,
+    categories: ['archive', 'museum'],
+    address: '〒624-0853 京都府舞鶴市南田辺1（西総合会館1階）',
+    phone: '0773-75-8836',
+    hours_ja: '9:00～17:00（入館16:30まで）', hours_en: '9:00-17:00 (last entry 16:30)',
+    closed_ja: '毎週月曜（祝日の場合は翌々日）、年末年始', closed_en: 'Mondays, Year-end/NY',
+    fee_ja: '大人100円 / 学生50円', fee_en: 'Adults ¥100 / Students ¥50',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '縄文時代の遺跡出土品や江戸時代の城下町に関する資料を展示する施設。',
+    desc_en: 'Museum displaying artifacts from the Jomon period and materials about the Edo-period castle town.',
+    access: { walk: '徒歩約15分 / Walk ~15 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/kyoudosiryou.jpg'
+  },
+  {
+    id: 24, name_ja: '円隆寺', name_en: 'Enryu-ji Temple',
+    area: 'west',
+    lat: 35.4460, lng: 135.3350,
+    categories: ['temple', 'autumn'],
+    address: '〒624-0841 京都府舞鶴市引土72',
+    phone: '0773-75-1193',
+    hours_ja: '—', hours_en: '—',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '奈良時代に行基が建立した古寺。平安・鎌倉時代の仏像が多数残る。大師堂前のれんが敷道には明治22年製の刻印あり。',
+    desc_en: 'An ancient temple built by the monk Gyoki in the Nara period. Houses many Buddhist statues from Heian and Kamakura periods. Brick path with 1889 stamps.',
+    access: { walk: '徒歩約18分 / Walk ~18 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.4km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/PH393_1.jpg'
+  },
+  {
+    id: 25, name_ja: '朝代神社', name_en: 'Asashiro Shrine',
+    area: 'west',
+    lat: 35.4450, lng: 135.3340,
+    categories: ['temple'],
+    address: '〒624-0842 京都府舞鶴市朝代13',
+    phone: '0773-75-0132',
+    hours_ja: '参拝自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '西暦673年創建の古社。舞鶴の産土神・伊弉諾尊をお祀り。本殿は市指定文化財。4年に一度の太刀振りが有名。',
+    desc_en: 'Ancient shrine founded in 673 AD. Enshrines Izanagi-no-Mikoto, patron deity of Maizuru. Main hall is a city-designated cultural property.',
+    access: { walk: '徒歩約16分 / Walk ~16 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.3km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/1D1A8403-1024x683.jpg'
+  },
+  {
+    id: 26, name_ja: '桂林寺', name_en: 'Keirin-ji Temple',
+    area: 'west',
+    lat: 35.4480, lng: 135.3330,
+    categories: ['temple', 'sakura'],
+    address: '〒624-0936 京都府舞鶴市紺屋69',
+    phone: '0773-75-0168',
+    hours_ja: '—', hours_en: '—',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '曹洞宗中本山の禅寺。細川幽斎の田辺城籠城戦に僧侶が決死の覚悟で参加した歴史を持つ。中国文化の影響を受けた境内。',
+    desc_en: 'A Soto Zen temple. Monks from this temple joined the desperate defense of Tanabe Castle during the siege by Hosokawa Yusai. Chinese-influenced architecture.',
+    access: { walk: '徒歩約14分 / Walk ~14 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.1km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/1D1A8304-1024x683.jpg'
+  },
+  {
+    id: 27, name_ja: '見樹寺', name_en: 'Kenju-ji Temple',
+    area: 'west',
+    lat: 35.4440, lng: 135.3300,
+    categories: ['temple'],
+    address: '京都府舞鶴市西96',
+    phone: '—',
+    hours_ja: '—', hours_en: '—',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '歴代藩主の菩提寺。馬の歩幅に合わせた広い石段と高い山門が特徴。大石内蔵助の妻・りくの曽祖父が奉納した石灯籠あり。',
+    desc_en: 'Family temple of domain lords. Features wide stone steps designed for horseback entry and a tall gate. Has a stone lantern donated by an ancestor of Lady Riku (wife of Oishi Kuranosuke of the 47 Ronin).',
+    access: { walk: '徒歩約18分 / Walk ~18 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/03/S__36741152-1024x768.jpg'
+  },
+  {
+    id: 28, name_ja: '芸屋台', name_en: 'Gei-Yatai (Festival Stage)',
+    area: 'west',
+    lat: 35.4472, lng: 135.3318,
+    categories: ['historic'],
+    address: '〒624-0853 京都府舞鶴市南田辺15-22',
+    phone: '0773-75-8600',
+    hours_ja: '—', hours_en: '—',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '江戸時代に子ども歌舞伎に使用された移動舞台。朝代神社の祭礼で奉納され、子どもが歌舞伎を演じながら練り歩いた。田辺城跡に保存。',
+    desc_en: 'Edo-period mobile stage used for children\'s kabuki performances. Presented at Asashiro Shrine festivals. Preserved at Tanabe Castle ruins.',
+    access: { walk: '徒歩約15分 / Walk ~15 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/03/芸屋台-1024x768.jpg'
+  },
+  {
+    id: 29, name_ja: '大野辺緑地', name_en: 'Onobe Green Space',
+    area: 'west',
+    lat: 35.4520, lng: 135.3280,
+    categories: ['park', 'scenery'],
+    address: '〒624-0931 京都府舞鶴市松陰',
+    phone: '—',
+    hours_ja: '自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '第3ふ頭の南側、西港に面した緑地。海上保安庁巡視船やクルーズ船が間近に。建部山（丹後富士）を望むフォトスポット。',
+    desc_en: 'Green space facing the west port, south of Pier 3. Close views of Japan Coast Guard ships and cruise vessels. Photo spot with Mt. Tatebe (Tango Fuji) view.',
+    access: { walk: '徒歩約8分 / Walk ~8 min', bus: null, taxi: null, dist: '0.6km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/7O1A7083-1024x683.jpg'
+  },
+  {
+    id: 30, name_ja: '吉原入江', name_en: 'Yoshihara Inlet ("Venice of Japan")',
+    area: 'west',
+    lat: 35.4510, lng: 135.3260,
+    categories: ['scenery'],
+    address: '〒624-0921 京都府舞鶴市東吉原',
+    phone: '—',
+    hours_ja: '自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: '—', parking_en: '—',
+    desc_ja: '「日本のヴェネツィア」として知られる景観地。家の裏に漁船が並ぶ運河沿いの風景が外国人旅行者にも人気のフォトスポット。',
+    desc_en: 'Known as "Venice of Japan". The canal-side scene with fishing boats behind houses is a popular photo spot, especially with international tourists.',
+    access: { walk: '徒歩約10分 / Walk ~10 min', bus: null, taxi: null, dist: '0.7km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/1D1A0223-1024x683.jpg'
+  },
+  {
+    id: 31, name_ja: '日の出湯', name_en: 'Hinode-yu Bath House',
+    area: 'west',
+    lat: 35.4515, lng: 135.3265,
+    categories: ['sento'],
+    address: '〒624-0922 京都府舞鶴市字東吉原297-2',
+    phone: '0773-75-0366',
+    hours_ja: '16:30～20:00', hours_en: '16:30-20:00',
+    closed_ja: '土曜日', closed_en: 'Saturdays',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '1台', parking_en: '1 space',
+    desc_ja: '漁師町・吉原地区にある町家造りの銭湯。2021年に国有形文化財に登録。昭和レトロなタイルが美しい。五老ケ岳の伏流水を使用。',
+    desc_en: 'A traditional townhouse-style public bath in the Yoshihara fishing district. Registered National Tangible Cultural Property (2021). Beautiful Showa-retro tiles. Uses underground water from Mt. Goro.',
+    access: { walk: '徒歩約10分 / Walk ~10 min', bus: null, taxi: null, dist: '0.7km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/1D1A8643-1024x683.jpg'
+  },
+  {
+    id: 32, name_ja: '若の湯', name_en: 'Waka-no-yu Bath House',
+    area: 'west',
+    lat: 35.4475, lng: 135.3325,
+    categories: ['sento'],
+    address: '〒624-0926 京都府舞鶴市本58',
+    phone: '0773-75-2541',
+    hours_ja: '15:00～21:00', hours_en: '15:00-21:00',
+    closed_ja: '水曜・日曜', closed_en: 'Wed/Sun',
+    fee_ja: '大人450円 / 小学生150円', fee_en: 'Adults ¥450 / Children ¥150',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '商店街にある洋館風のレトロな銭湯。登録有形文化財。関西では珍しいペンキ絵が自慢。',
+    desc_en: 'A retro Western-style public bath in the shopping street. Registered Tangible Cultural Property. Features rare paint murals.',
+    access: { walk: '徒歩約14分 / Walk ~14 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.1km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/wakanoyu_img001.jpg'
+  },
+  {
+    id: 33, name_ja: '大庄屋上野家', name_en: 'Oshoya Ueno-ke House',
+    area: 'west',
+    lat: 35.4200, lng: 135.3100,
+    categories: ['historic'],
+    address: '〒624-0118 京都府舞鶴市西方寺285',
+    phone: '0773-60-8200',
+    hours_ja: '8:30～17:15', hours_en: '8:30-17:15',
+    closed_ja: '水曜', closed_en: 'Wednesdays',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '江戸後期建築の茅葺民家。地域特産品販売、蔵ギャラリー、古民家レストランあり（完全予約制）。',
+    desc_en: 'A thatched-roof folk house from the late Edo period. Local products, gallery, and traditional restaurant (reservation only).',
+    access: { walk: null, bus: '西舞鶴駅からバス約25分 / Bus from Nishi-Maizuru ~25min', taxi: '約15分 / ~15 min', dist: '7km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/070509-15uenoke-1024x768.jpg'
+  },
+  {
+    id: 34, name_ja: 'すとろべりぃあいすバラ園', name_en: 'Strawberry Ice Rose Garden',
+    area: 'west',
+    lat: 35.4380, lng: 135.3250,
+    categories: ['flower'],
+    address: '〒624-0905 京都府舞鶴市福来120',
+    phone: '0773-77-1267',
+    hours_ja: '10:00～18:00（オフシーズンは17:00まで）', hours_en: '10:00-18:00 (off-season until 17:00)',
+    closed_ja: '火曜（ハイシーズンは無休）', closed_en: 'Tuesdays (open daily in season)',
+    fee_ja: '大人300円 / 子供100円', fee_en: 'Adults ¥300 / Children ¥100',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '1,100品種を誇る全日本第3位のバラ園。原種からイングリッシュローズまで2,000㎡の敷地に咲き誇ります。',
+    desc_en: 'Japan\'s 3rd largest rose garden with 1,100 varieties. From wild species to English roses across 2,000㎡.',
+    access: { walk: null, bus: '西舞鶴駅からバス約15分 / Bus from Nishi-Maizuru ~15min', taxi: '約10分 / ~10 min', dist: '4km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/バラ園02.jpg'
+  },
+  {
+    id: 35, name_ja: 'Seis×Cine Grulla', name_en: 'Seis × Cine Grulla',
+    area: 'west',
+    lat: 35.4465, lng: 135.3335,
+    categories: ['cinema', 'music'],
+    address: '〒624-0928 京都府舞鶴市竹屋24-2',
+    phone: '0773-60-5566',
+    hours_ja: '12:00～22:00（火水は12:00～15:00）', hours_en: '12:00-22:00 (Tue/Wed 12:00-15:00)',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '近隣利用', parking_en: 'Nearby parking',
+    desc_ja: '六角形のホールがあるシネマカフェ。ランチ、飲み物、雑貨販売、ギャラリー、ライブハウスとして多機能に運営。',
+    desc_en: 'A cinema cafe with a hexagonal hall. Multifunctional: lunch, drinks, goods shop, gallery, and live music venue.',
+    access: { walk: '徒歩約15分 / Walk ~15 min', bus: null, taxi: '約5分 / ~5 min', dist: '1.2km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/1D1A8461-1024x683.jpg'
+  },
+  {
+    id: 36, name_ja: '与保呂川の千本桜', name_en: 'Yohoro River Cherry Blossoms',
+    area: 'east',
+    lat: 35.4620, lng: 135.3920,
+    categories: ['sakura', 'scenery'],
+    address: '〒625-0052 京都府舞鶴市行永',
+    phone: '—',
+    hours_ja: '自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'なし', parking_en: 'None',
+    desc_ja: '約7kmにわたって約1,000本のソメイヨシノが咲き乱れる舞鶴最大規模の桜並木。昭和15年の海軍病院記念植樹が始まり。',
+    desc_en: 'Maizuru\'s largest cherry blossom avenue - about 1,000 Somei-Yoshino trees along 7km of the Yohoro River. Originated from naval hospital memorial planting in 1940.',
+    access: { walk: null, bus: '東舞鶴駅から徒歩15分 / Walk 15min from Higashi-Maizuru Sta.', taxi: '約25分 / ~25 min', dist: '11km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/与保呂川桜いちおし）-1024x1024.jpg'
+  },
+  {
+    id: 37, name_ja: '吉田のしだれ桜（瑠璃寺）', name_en: 'Yoshida Weeping Cherry (Ruri-ji Temple)',
+    area: 'west',
+    lat: 35.4350, lng: 135.3200,
+    categories: ['sakura', 'temple'],
+    address: '〒624-0943 京都府舞鶴市吉田170',
+    phone: '—',
+    hours_ja: '自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '桜シーズンのみ（普通車300円）', parking_en: 'Cherry season only (¥300)',
+    desc_ja: '樹齢400年の古木と100年の若木が織りなす「桜の滝」。細川幽斎が京都吉田山から移植。舞鶴市指定天然記念物。満開時ライトアップ。',
+    desc_en: 'A "waterfall of cherry blossoms" from 400-year-old and 100-year-old weeping cherry trees. Transplanted by Hosokawa Yusai from Kyoto. City-designated Natural Monument. Illuminated at full bloom.',
+    access: { walk: null, bus: '西舞鶴駅からバス約20分 / Bus from Nishi-Maizuru ~20min', taxi: '約10分 / ~10 min', dist: '5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/吉田のしだれ桜市のフォトライブラリー）-1024x807.jpg'
+  },
+  {
+    id: 38, name_ja: '共楽公園', name_en: 'Kyoraku Park',
+    area: 'east',
+    lat: 35.4710, lng: 135.3870,
+    categories: ['park', 'sakura', 'scenery'],
+    address: '〒625-0087 京都府舞鶴市字余部下56',
+    phone: '—',
+    hours_ja: '自由', hours_en: 'Open anytime',
+    closed_ja: 'なし', closed_en: 'None',
+    fee_ja: '無料', fee_en: 'Free',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '舞鶴湾を眺望できる丘陵地に約450本の桜。ハワイ出身の元米軍日系2世から寄贈された「アロハ桜」約40本が現存。5月にはツツジも。',
+    desc_en: 'A hilltop park overlooking Maizuru Bay with ~450 cherry trees. ~40 "Aloha Cherry" trees donated by a Japanese-American WWII veteran from Hawaii survive here.',
+    access: { walk: null, bus: '東舞鶴駅から徒歩10分 / Walk 10min from Higashi-Maizuru Sta.', taxi: '約22分 / ~22 min', dist: '10km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/02/4月８日-7-1024x769.jpg'
+  },
+  {
+    id: 39, name_ja: '竜宮浜海水浴場', name_en: 'Ryuguuhama Beach',
+    area: 'east',
+    lat: 35.5200, lng: 135.3900,
+    categories: ['beach'],
+    address: '〒625-0153 京都府舞鶴市三浜',
+    phone: '—',
+    hours_ja: '海開き: 毎年7月上旬', hours_en: 'Beach opens: early July each year',
+    closed_ja: 'シーズン外', closed_en: 'Off-season',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '約500台（1,000円/日）', parking_en: '~500 spaces (¥1,000/day)',
+    desc_ja: '大浦半島西側の全長約1.5kmの遠浅の白浜。若狭湾国定公園内で、沖合いの島々が望める。',
+    desc_en: 'A 1.5km shallow white sand beach on the west side of the Oura Peninsula. Within Wakasa Bay Quasi-National Park.',
+    access: { walk: null, bus: '東舞鶴駅からバス約40分 / Bus from Higashi-Maizuru ~40min', taxi: '約45分 / ~45 min', dist: '20km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/PH796_1-1024x576.jpg'
+  },
+  {
+    id: 40, name_ja: '神崎海水浴場', name_en: 'Kanzaki Beach',
+    area: 'west',
+    lat: 35.4300, lng: 135.2900,
+    categories: ['beach'],
+    address: '〒624-0962 京都府舞鶴市東神崎',
+    phone: '0773-82-5120',
+    hours_ja: '海開き: 毎年7月上旬', hours_en: 'Beach opens: early July each year',
+    closed_ja: 'シーズン外', closed_en: 'Off-season',
+    fee_ja: '—', fee_en: '—',
+    parking_ja: '約1,500台（夏季1,000円/日）', parking_en: '~1,500 spaces (¥1,000/day in summer)',
+    desc_ja: '東西約2kmの白浜青松の海水浴場。遠浅で広大な砂浜。若狭湾国定公園。キス釣の名所。',
+    desc_en: 'A 2km white sand beach with pine trees. Shallow, wide sands in Wakasa Bay Quasi-National Park. Famous for sand borer fishing.',
+    access: { walk: null, bus: '西舞鶴駅からバス約30分 / Bus from Nishi-Maizuru ~30min', taxi: '約20分 / ~20 min', dist: '9km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/06/KANZAKI-1024x683.jpg'
+  },
+  {
+    id: 41, name_ja: '発酵美人・まいづる', name_en: 'Hakko Bijin Maizuru (Enzyme Bath)',
+    area: 'east',
+    lat: 35.4758, lng: 135.3885,
+    categories: ['enzyme'],
+    address: '〒625-0036 京都府舞鶴市字浜18',
+    phone: '0773-65-5000',
+    hours_ja: '10:00～19:00（最終予約18:00）', hours_en: '10:00-19:00 (last reservation 18:00)',
+    closed_ja: '—', closed_en: '—',
+    fee_ja: '酵素風呂3,500円 / よもぎ蒸し2,500円', fee_en: 'Enzyme bath ¥3,500 / Mugwort steam ¥2,500',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '酵素風呂とよもぎ蒸しで免疫力アップ・血行改善を目指す温活施設。専門スタッフによるカウンセリング対応。',
+    desc_en: 'A wellness facility featuring enzyme baths and mugwort steaming for improved immunity and circulation. Professional staff consultations available.',
+    access: { walk: null, bus: '東舞鶴駅から徒歩20分 / Walk 20min from Higashi-Maizuru Sta.', taxi: '約25分 / ~25 min', dist: '10.5km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/image.jpg'
+  },
+  {
+    id: 42, name_ja: 'たかお温泉 光の湯', name_en: 'Takao Onsen Hikari-no-yu',
+    area: 'west',
+    lat: 35.4350, lng: 135.3400,
+    categories: ['onsen'],
+    address: '〒624-0825 京都府舞鶴市十倉71',
+    phone: '0773-77-1126',
+    hours_ja: '10:00～22:00（最終受付21:30）', hours_en: '10:00-22:00 (last entry 21:30)',
+    closed_ja: '木曜（祝祭日は営業）', closed_en: 'Thursdays (open on holidays)',
+    fee_ja: '大人800円 / 子供400円', fee_en: 'Adults ¥800 / Children ¥400',
+    parking_ja: 'あり', parking_en: 'Available',
+    desc_ja: '天然温泉を利用した日帰り温泉施設。気軽に楽しめる癒しのスポット。',
+    desc_en: 'A day-trip hot spring facility using natural hot spring water. A relaxing spot to enjoy easily.',
+    access: { walk: null, bus: '西舞鶴駅からバス約15分 / Bus from Nishi-Maizuru ~15min', taxi: '約10分 / ~10 min', dist: '4km' },
+    image: 'https://maizuru-kanko.net/wp/wp-content/uploads/2023/01/光の湯-1024x683.jpg'
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentCategory = 'all';
+let currentView = 'map';
+let map, markers = [], markerLayer;
+let searchQuery = '';
+
+// ============================================================
+// INITIALIZE MAP
+// ============================================================
+// Map tile layers per language
+const TILE_LAYERS = {
+  ja: {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  },
+  en: {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }
+};
+let currentTileLayer = null;
+let pierMarker = null;
+
+function initMap() {
+  map = L.map('map', {
+    center: [35.460, 135.360],
+    zoom: 13,
+    zoomControl: true,
+    attributionControl: true
+  });
+
+  setMapTiles();
+  addPierMarker();
+
+  markerLayer = L.layerGroup().addTo(map);
+  renderMarkers();
+}
+
+function setMapTiles() {
+  if (currentTileLayer) {
+    map.removeLayer(currentTileLayer);
+  }
+  const tileConfig = TILE_LAYERS[currentLang] || TILE_LAYERS.en;
+  currentTileLayer = L.tileLayer(tileConfig.url, {
+    attribution: tileConfig.attribution,
+    maxZoom: 17,
+    minZoom: 11
+  }).addTo(map);
+}
+
+function addPierMarker() {
+  if (pierMarker) {
+    map.removeLayer(pierMarker);
+  }
+  const pierIcon = L.divIcon({
+    html: '<div class="pier-icon">🚢</div>',
+    className: '',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+  const pierName = currentLang === 'en' ? 'Cruise Terminal (2nd Pier)' : '前島埠頭（第二埠頭）';
+  const pierDesc = currentLang === 'en' ? 'Your starting point - Cruise ship terminal' : 'クルーズ船ターミナル（出発地点）';
+  pierMarker = L.marker([PIER_LOCATION.lat, PIER_LOCATION.lng], { icon: pierIcon })
+    .addTo(map)
+    .bindPopup(`<div class="popup-card"><h3>🚢 ${pierName}</h3><p class="popup-desc">${pierDesc}</p></div>`);
+}
+
+function getCatColor(cats) {
+  for (const c of cats) {
+    if (CAT_COLORS[c]) return CAT_COLORS[c];
+  }
+  return '#1a5276';
+}
+
+function renderMarkers() {
+  markerLayer.clearLayers();
+  markers = [];
+  const filtered = getFilteredSpots();
+
+  filtered.forEach(spot => {
+    const color = getCatColor(spot.categories);
+    const emoji = CATEGORIES.find(c => spot.categories.includes(c.id))?.emoji || '📍';
+    const icon = L.divIcon({
+      html: `<div class="spot-icon" style="background:${color}">${emoji}</div>`,
+      className: '',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+
+    const name = currentLang === 'en' ? spot.name_en : spot.name_ja;
+    const desc = currentLang === 'en' ? spot.desc_en : spot.desc_ja;
+    const detailBtn = currentLang === 'en' ? 'View Details' : '詳細を見る';
+    const catLabels = spot.categories.map(c => t('categories.' + c)).join(', ');
+
+    const popup = L.popup({ maxWidth: 260 }).setContent(`
+      <div class="popup-card">
+        <h3>${name}</h3>
+        <div class="popup-cat">${catLabels}</div>
+        <div class="popup-desc">${desc}</div>
+        <button class="popup-detail-btn" onclick="openDetail(${spot.id})">${detailBtn}</button>
+      </div>
+    `);
+
+    // Use edited coordinates if available
+    const lat = editedCoords[spot.id]?.lat ?? spot.lat;
+    const lng = editedCoords[spot.id]?.lng ?? spot.lng;
+
+    const marker = L.marker([lat, lng], {
+      icon,
+      draggable: editMode
+    }).bindPopup(popup);
+
+    if (editMode) {
+      marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        editedCoords[spot.id] = {
+          lat: Math.round(pos.lat * 100000) / 100000,
+          lng: Math.round(pos.lng * 100000) / 100000
+        };
+        // Update popup to show new coords
+        const coordInfo = `<div style="font-size:10px;color:#e74c3c;margin-top:4px">📐 ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}</div>`;
+        e.target.getPopup().setContent(`
+          <div class="popup-card">
+            <h3>${name}</h3>
+            <div class="popup-cat">${catLabels}</div>
+            ${coordInfo}
+            <button class="popup-detail-btn" onclick="openDetail(${spot.id})">${detailBtn}</button>
+          </div>
+        `);
+      });
+    }
+
+    markerLayer.addLayer(marker);
+    markers.push({ marker, spot });
+  });
+}
+
+// ============================================================
+// FILTERING
+// ============================================================
+function getFilteredSpots() {
+  return SPOTS.filter(spot => {
+    const catMatch = currentCategory === 'all' || spot.categories.includes(currentCategory);
+    if (!catMatch) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return spot.name_ja.toLowerCase().includes(q) ||
+           spot.name_en.toLowerCase().includes(q) ||
+           spot.desc_ja.toLowerCase().includes(q) ||
+           spot.desc_en.toLowerCase().includes(q) ||
+           spot.address.toLowerCase().includes(q);
+  });
+}
+
+function updateResultsCount() {
+  const count = getFilteredSpots().length;
+  document.getElementById('resultsCount').textContent = `${count} ${t('spots')}`;
+}
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+function renderCategories() {
+  const bar = document.getElementById('categoriesBar');
+  bar.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (currentCategory === cat.id ? ' active' : '');
+    const label = cat.id === 'all' ? t('all') : t('categories.' + cat.id);
+    btn.innerHTML = `<span class="emoji">${cat.emoji}</span> ${label}`;
+    btn.onclick = () => {
+      currentCategory = cat.id;
+      renderCategories();
+      renderMarkers();
+      renderList();
+      updateResultsCount();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// ============================================================
+// LIST VIEW
+// ============================================================
+function renderList() {
+  const container = document.getElementById('listView');
+  const filtered = getFilteredSpots();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="no-results"><div class="emoji">🔍</div><p>${t('noResults')}</p><p style="font-size:12px;margin-top:4px">${t('tryAnother')}</p></div>`;
+    return;
+  }
+
+  // Sort by GPS distance if available, otherwise by pier distance
+  const sorted = [...filtered].sort((a, b) => {
+    if (userLat !== null) {
+      const dA = calcDistance(userLat, userLng, a.lat, a.lng);
+      const dB = calcDistance(userLat, userLng, b.lat, b.lng);
+      return dA - dB;
+    }
+    const dA = Math.sqrt(Math.pow(a.lat - PIER_LOCATION.lat, 2) + Math.pow(a.lng - PIER_LOCATION.lng, 2));
+    const dB = Math.sqrt(Math.pow(b.lat - PIER_LOCATION.lat, 2) + Math.pow(b.lng - PIER_LOCATION.lng, 2));
+    return dA - dB;
+  });
+
+  container.innerHTML = sorted.map(spot => {
+    const name = currentLang === 'en' ? spot.name_en : spot.name_ja;
+    const area = spot.area === 'east' ? t('eastMaizuru') : t('westMaizuru');
+    const cats = spot.categories.map(c => `<span class="card-cat">${t('categories.' + c)}</span>`).join('');
+    const dist = spot.access.dist;
+    // GPS distance from current location
+    let gpsDistHTML = '';
+    if (userLat !== null) {
+      const gpsDist = calcDistance(userLat, userLng, spot.lat, spot.lng);
+      const walkMin = Math.round(gpsDist / 0.08); // ~80m/min walking
+      gpsDistHTML = `<div class="card-gps-dist">📍 ${t('fromHere')}: ${formatDist(gpsDist)}（${t('walk')} ~${walkMin}${t('minutes')}）</div>`;
+    }
+    return `
+      <div class="spot-card" onclick="openDetail(${spot.id})">
+        <div class="spot-card-body">
+          <h3>${name}</h3>
+          <div class="card-sub">${spot.address}</div>
+          <div class="card-cats">
+            <span class="card-area">${area}</span>
+            ${cats}
+          </div>
+          ${gpsDistHTML}
+          <div class="card-distance">🚢 ${t('fromPier')}: ${dist}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// DETAIL MODAL
+// ============================================================
+function openDetail(id) {
+  const spot = SPOTS.find(s => s.id === id);
+  if (!spot) return;
+
+  const name = currentLang === 'en' ? spot.name_en : spot.name_ja;
+  const desc = currentLang === 'en' ? spot.desc_en : spot.desc_ja;
+  const area = spot.area === 'east' ? t('eastMaizuru') : t('westMaizuru');
+  const hours = currentLang === 'en' ? spot.hours_en : spot.hours_ja;
+  const closed = currentLang === 'en' ? spot.closed_en : spot.closed_ja;
+  const fee = currentLang === 'en' ? spot.fee_en : spot.fee_ja;
+  const parking = currentLang === 'en' ? spot.parking_en : spot.parking_ja;
+  const cats = spot.categories.map(c => `<span class="modal-cat">${t('categories.' + c)}</span>`).join('');
+
+  // Access methods (localized)
+  const walkText = localizeAccess(spot.access.walk);
+  const busText = localizeAccess(spot.access.bus);
+  const taxiText = localizeAccess(spot.access.taxi);
+
+  let accessHTML = '';
+  // GPS-based distance from current location
+  if (userLat !== null) {
+    const gpsDist = calcDistance(userLat, userLng, spot.lat, spot.lng);
+    const walkMin = Math.round(gpsDist / 0.08);
+    accessHTML += `<div class="access-method" style="border:2px solid #4285f4"><div class="method-title" style="color:#4285f4">📍 ${t('fromHere')}</div><div class="method-detail">${formatDist(gpsDist)} — ${t('walk')} ~${walkMin}${t('minutes')}</div></div>`;
+  }
+  if (walkText) {
+    accessHTML += `<div class="access-method"><div class="method-title">🚶 ${t('walk')}</div><div class="method-detail">${walkText}</div></div>`;
+  }
+  if (busText) {
+    accessHTML += `<div class="access-method"><div class="method-title">🚌 ${t('bus')}</div><div class="method-detail">${busText}</div></div>`;
+  }
+  if (taxiText) {
+    accessHTML += `<div class="access-method"><div class="method-title">🚕 ${t('taxi')}</div><div class="method-detail">${taxiText}</div><div class="method-time">📏 ${spot.access.dist}</div></div>`;
+  }
+
+  // Photo
+  const images = spot.images || (spot.image ? [spot.image] : []);
+  let imageHTML = '';
+  if (images.length > 0) {
+    const isOnline = navigator.onLine;
+    if (isOnline) {
+      imageHTML = `<div class="modal-img-wrap"><img src="${images[0]}" alt="${name}" onerror="this.parentElement.innerHTML='<div class=img-offline>📷</div>'"></div>`;
+    } else {
+      imageHTML = `<div class="modal-img-wrap"><div class="img-offline">📷</div></div>`;
+    }
+  }
+
+  // YouTube
+  let youtubeHTML = '';
+  if (spot.youtube) {
+    const isOnline = navigator.onLine;
+    // Extract video ID from various YouTube URL formats
+    const ytMatch = spot.youtube.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    const ytId = ytMatch ? ytMatch[1] : null;
+    if (ytId) {
+      if (isOnline) {
+        youtubeHTML = `
+          <div class="youtube-section">
+            <iframe src="https://www.youtube.com/embed/${ytId}?rel=0" allowfullscreen loading="lazy"></iframe>
+          </div>`;
+      } else {
+        youtubeHTML = `
+          <div class="youtube-section">
+            <div class="youtube-offline">
+              <div class="yt-icon">▶️</div>
+              <div class="yt-msg">${currentLang === 'ja' ? 'YouTube動画を見るにはインターネットに接続してください' : 'Connect to the internet to watch this video'}</div>
+            </div>
+          </div>`;
+      }
+    }
+  }
+
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    ${imageHTML}
+    <div style="padding:16px">
+    <h2>${name}</h2>
+    <div class="modal-sub">${area} · ${spot.address}</div>
+    <div class="modal-cats">${cats}</div>
+
+    ${youtubeHTML}
+
+    <div class="desc-section">
+      <strong>${t('about')}</strong><br>
+      ${desc}
+    </div>
+
+    <div class="access-section">
+      <h4>🚢 ${t('accessInfo')}</h4>
+      ${accessHTML}
+    </div>
+
+    <div class="info-section">
+      <h4>ℹ️ ${t('basicInfo')}</h4>
+      ${hours && hours !== '—' ? `<div class="info-row"><div class="info-label">${t('openHours')}</div><div class="info-value">${hours}</div></div>` : ''}
+      ${closed && closed !== '—' ? `<div class="info-row"><div class="info-label">${t('closedDay')}</div><div class="info-value">${closed}</div></div>` : ''}
+      ${fee && fee !== '—' ? `<div class="info-row"><div class="info-label">${t('fee')}</div><div class="info-value">${fee}</div></div>` : ''}
+      ${spot.phone && spot.phone !== '—' ? `<div class="info-row"><div class="info-label">${t('phone')}</div><div class="info-value">${spot.phone}</div></div>` : ''}
+      ${parking && parking !== '—' ? `<div class="info-row"><div class="info-label">${t('parking')}</div><div class="info-value">${parking}</div></div>` : ''}
+    </div>
+    </div>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('modal').scrollTop = 0;
+}
+
+function closeModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// ============================================================
+// VIEW TOGGLE
+// ============================================================
+function setView(view) {
+  currentView = view;
+  document.getElementById('mapViewBtn').classList.toggle('active', view === 'map');
+  document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+  document.getElementById('map').style.display = view === 'map' ? 'block' : 'none';
+  document.getElementById('listView').classList.toggle('active', view === 'list');
+  if (view === 'map') {
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  searchQuery = e.target.value.trim();
+  renderMarkers();
+  renderList();
+  updateResultsCount();
+});
+
+// ============================================================
+// SERVICE WORKER REGISTRATION
+// ============================================================
+async function registerSW() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      console.log('SW registered:', reg.scope);
+    } catch (e) {
+      console.log('SW registration failed:', e);
+    }
+  }
+}
+
+// ============================================================
+// COORDINATE EDIT MODE
+// ============================================================
+let editMode = false;
+let editedCoords = {};
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editBtn').classList.toggle('active', editMode);
+  document.getElementById('editBtn').textContent = editMode ? '💾 Export' : '📐 Edit Coords';
+  document.getElementById('editBanner').classList.toggle('active', editMode);
+
+  if (editMode) {
+    showBanner('Drag markers to correct positions');
+    renderMarkers(); // Re-render with draggable markers
+  } else {
+    // Export changed coordinates
+    if (Object.keys(editedCoords).length > 0) {
+      exportCoords();
+    }
+    renderMarkers(); // Re-render without draggable
+  }
+}
+
+function exportCoords() {
+  const data = {};
+  for (const [id, coords] of Object.entries(editedCoords)) {
+    const spot = SPOTS.find(s => s.id === parseInt(id));
+    data[id] = {
+      name: spot.name_ja,
+      lat: coords.lat,
+      lng: coords.lng
+    };
+  }
+  document.getElementById('exportData').value = JSON.stringify(data, null, 2);
+  document.getElementById('exportModal').classList.add('active');
+}
+
+function copyExport() {
+  const textarea = document.getElementById('exportData');
+  textarea.select();
+  document.execCommand('copy');
+  showBanner('Copied! / コピーしました!');
+}
+
+function closeExport() {
+  document.getElementById('exportModal').classList.remove('active');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const bar = document.getElementById('loadingBar');
+  const status = document.getElementById('loadingStatus');
+
+  bar.style.width = '30%';
+  status.textContent = 'Loading map...';
+
+  setTimeout(() => {
+    bar.style.width = '60%';
+    status.textContent = 'Initializing spots...';
+
+    initMap();
+    renderCategories();
+    renderList();
+    updateResultsCount();
+
+    bar.style.width = '90%';
+    status.textContent = 'Caching for offline...';
+
+    registerSW();
+
+    setTimeout(() => {
+      bar.style.width = '100%';
+      status.textContent = 'Ready!';
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        // Auto-start GPS
+        startGPS();
+      }, 400);
+    }, 500);
+  }, 300);
+}
+
+window.addEventListener('load', init);
+
+// Prevent bounce scrolling on iOS
+document.body.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.list-view, .modal, .categories, .export-modal')) return;
+  e.preventDefault();
+}, { passive: false });
+</script>
+</body>
+</html>
