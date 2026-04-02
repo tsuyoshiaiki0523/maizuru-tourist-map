@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>舞鶴バス・JR時刻表 / Maizuru Bus & Train Timetable</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: #f5f6fa; color: #2c3e50; padding: 16px; max-width: 600px; margin: 0 auto; }
+h1 { font-size: 18px; color: #1a5276; margin-bottom: 4px; }
+.subtitle { font-size: 12px; color: #7f8c8d; margin-bottom: 16px; }
+.back-link { display: inline-block; margin-bottom: 12px; color: #2980b9; text-decoration: none; font-size: 14px; }
+.section { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.section h2 { font-size: 16px; color: #1a5276; margin-bottom: 8px; border-bottom: 2px solid #1a5276; padding-bottom: 4px; }
+.section h3 { font-size: 14px; color: #27ae60; margin: 12px 0 6px; }
+.cash-warning { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 14px; font-weight: 700; color: #856404; text-align: center; }
+.cash-warning .en { font-weight: 600; font-size: 13px; }
+.timetable { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.timetable th { background: #1a5276; color: white; padding: 6px 8px; text-align: left; }
+.timetable td { padding: 5px 8px; border-bottom: 1px solid #eee; }
+.timetable tr:nth-child(even) { background: #f8f9fa; }
+.time-grid { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.time-chip { background: #e8f4fd; color: #1a5276; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.route-box { background: #f0faf0; border-left: 4px solid #27ae60; padding: 8px 12px; margin: 8px 0; font-size: 13px; }
+.note { font-size: 12px; color: #e74c3c; margin: 6px 0; }
+.info-note { font-size: 12px; color: #7f8c8d; margin: 8px 0; padding: 8px; background: #f0f0f0; border-radius: 6px; }
+.pdf-links { margin-top: 12px; }
+.pdf-links a { display: block; padding: 10px 12px; margin: 6px 0; background: #1a5276; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.pdf-links a::before { content: '📄 '; }
+.pdf-links .note { color: #7f8c8d; font-size: 11px; }
+@media print {
+  body { padding: 0; max-width: 100%; }
+  .back-link, .pdf-links { display: none; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← マップに戻る / Back to Map</a>
+
+<h1>舞鶴 バス・JR時刻表</h1>
+<div class="subtitle">Maizuru Bus & JR Train Timetable for Cruise Ship Tourists</div>
+
+<div class="cash-warning">
+  💴 バスの支払いは現金（キャッシュ）のみです<br>
+  ICカード・クレジットカード不可<br>
+  <span class="en">💴 Buses accept CASH ONLY. No IC cards or credit cards.</span>
+</div>
+
+<!-- JR Train -->
+<div class="section">
+  <h2>🚃 JR舞鶴線 西舞鶴→東舞鶴</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:6px">所要時間: 約7分 / 運賃: 210円<br>Duration: ~7min / Fare: ¥210</p>
+
+  <h3>発車時刻 / Departure Times</h3>
+  <div class="time-grid">
+    <span class="time-chip">05:25</span>
+    <span class="time-chip">06:13</span>
+    <span class="time-chip">07:06</span>
+    <span class="time-chip">07:40</span>
+    <span class="time-chip">08:32</span>
+    <span class="time-chip">09:14</span>
+    <span class="time-chip">10:04</span>
+    <span class="time-chip">10:57</span>
+    <span class="time-chip">11:55</span>
+    <span class="time-chip">12:59</span>
+    <span class="time-chip">13:40</span>
+    <span class="time-chip">13:55</span>
+    <span class="time-chip">15:04</span>
+    <span class="time-chip">15:29</span>
+    <span class="time-chip">15:54</span>
+    <span class="time-chip">16:33</span>
+    <span class="time-chip">17:32</span>
+    <span class="time-chip">17:55</span>
+    <span class="time-chip">18:20</span>
+    <span class="time-chip">19:09</span>
+    <span class="time-chip">19:59</span>
+    <span class="time-chip">20:12</span>
+    <span class="time-chip">20:58</span>
+    <span class="time-chip">21:09</span>
+    <span class="time-chip">21:48</span>
+    <span class="time-chip">22:12</span>
+    <span class="time-chip">23:28</span>
+  </div>
+  <div class="info-note">⚠️ ダイヤは変更される場合があります。乗車前に駅の掲示板でご確認ください。<br>⚠️ Schedule may change. Please check the station board before boarding.</div>
+</div>
+
+<!-- East-West Loop Bus -->
+<div class="section">
+  <h2>🚌 東西循環線バス（10系統・20系統）</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:6px">京都交通バス / Kyoto Kotsu Bus<br>西舞鶴駅前⇔東舞鶴駅前 所要約30分</p>
+
+  <h3>主要停留所 / Key Bus Stops</h3>
+  <div class="route-box">
+    <strong>西舞鶴駅前</strong> → 千日前 → 本町 → 広小路 → 五老トンネル西口 → <strong>五老ヶ岳公園口</strong> → 中舞鶴 → 造船所前 → <strong>自衛隊桟橋前</strong> → <strong>赤れんがパーク・市役所前</strong> → 東門 → <strong>東舞鶴駅前</strong>
+  </div>
+
+  <h3>西舞鶴駅前 発車時刻 / Departures from 西舞鶴駅前</h3>
+  <div class="time-grid">
+    <span class="time-chip">06:20</span>
+    <span class="time-chip">07:00</span>
+    <span class="time-chip">07:30</span>
+    <span class="time-chip">08:10</span>
+    <span class="time-chip">08:40</span>
+    <span class="time-chip">09:20</span>
+    <span class="time-chip">09:50</span>
+    <span class="time-chip">10:30</span>
+    <span class="time-chip">11:00</span>
+    <span class="time-chip">11:40</span>
+    <span class="time-chip">12:10</span>
+    <span class="time-chip">12:50</span>
+    <span class="time-chip">13:20</span>
+    <span class="time-chip">14:00</span>
+    <span class="time-chip">14:30</span>
+    <span class="time-chip">15:10</span>
+    <span class="time-chip">15:40</span>
+    <span class="time-chip">16:20</span>
+    <span class="time-chip">16:50</span>
+    <span class="time-chip">18:10</span>
+    <span class="time-chip">18:50</span>
+    <span class="time-chip">19:30</span>
+    <span class="time-chip">20:10</span>
+  </div>
+  <div class="info-note">⚠️ ダイヤは変更される場合があります。バス停の掲示でご確認ください。<br>⚠️ Schedule may change. Please check at the bus stop.</div>
+</div>
+
+<!-- Mihama Line -->
+<div class="section">
+  <h2>🚌 三浜線バス（引揚記念館方面）</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:6px">京都交通バス / Kyoto Kotsu Bus<br>東舞鶴駅前→引揚記念館前 所要約16分 / 運賃450円</p>
+
+  <h3>東舞鶴駅前 発車時刻 / Departures from 東舞鶴駅前</h3>
+  <table class="timetable">
+    <tr><th>東舞鶴駅前 発</th><th>引揚記念館前 着</th></tr>
+    <tr><td>10:25</td><td>10:41</td></tr>
+    <tr><td>11:25</td><td>11:41</td></tr>
+    <tr><td>12:50</td><td>13:06</td></tr>
+    <tr><td>16:10</td><td>16:26</td></tr>
+    <tr><td>17:50</td><td>18:06</td></tr>
+  </table>
+  <div class="note">⚠️ 1日5本のみ！タクシーの利用も検討してください。<br>⚠️ Only 5 buses per day! Consider using a taxi.</div>
+</div>
+
+<!-- Tourist Loop Bus -->
+<div class="section">
+  <h2>🚌 観光ループバス（季節運行）</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:8px">4月〜11月の土日祝のみ運行<br>Operates weekends/holidays, April-November only</p>
+  <div class="route-box">
+    運賃: 大人200円 / こども100円<br>
+    Fare: Adults ¥200 / Children ¥100<br><br>
+    🎫 <strong>舞鶴かまぼこ手形</strong>（1日乗車券）<br>
+    大人1,000円 / こども500円<br>
+    バス乗り放題＋赤れんが博物館・引揚記念館・五老スカイタワー入場無料<br>
+    <span style="font-size:12px;color:#666">All-day pass: ¥1,000 adults / ¥500 children. Includes free admission to Red Brick Museum, Repatriation Museum, and Goro Sky Tower.</span>
+  </div>
+  <p style="font-size:12px;color:#e74c3c">※ クルーズ船寄港日は特別シャトルバスが運行される場合があります。<br>※ Special shuttle buses may operate on cruise ship days.</p>
+</div>
+
+<!-- Taxi Info -->
+<div class="section">
+  <h2>🚕 タクシー情報 / Taxi Information</h2>
+  <table class="timetable">
+    <tr><th>タクシー会社</th><th>電話番号</th></tr>
+    <tr><td>日本交通（舞鶴）</td><td>0773-75-1135</td></tr>
+    <tr><td>舞鶴交通</td><td>0773-75-3151</td></tr>
+    <tr><td>東交通</td><td>0773-62-0020</td></tr>
+  </table>
+  <p style="font-size:12px;color:#666;margin-top:8px">※ タクシーは現金・クレジットカード利用可<br>※ Taxis accept cash and credit cards</p>
+</div>
+
+<!-- PDF Links -->
+<div class="section">
+  <h2>📄 公式時刻表PDF / Official Timetable PDFs</h2>
+  <p style="font-size:12px;color:#e74c3c;margin-bottom:8px">※ WiFi接続時にダウンロードしてください<br>※ Download while connected to WiFi</p>
+  <div class="pdf-links">
+    <a href="https://www.kyotokotsu.jp/route/pdf/hidari170424.pdf">東西循環線（左回り・10系統）時刻表</a>
+    <a href="https://www.kyotokotsu.jp/route/pdf/migi170424.pdf">東西循環線（右回り・20系統）時刻表</a>
+    <a href="https://www.kyotokotsu.jp/route/pdf/obase191001.pdf">三浜線 時刻表（引揚記念館方面）</a>
+    <a href="https://www.kyotokotsu.jp/route/pdf/mkeitou2404.pdf">路線バス系統図（舞鶴地区全体）</a>
+    <p class="note" style="margin-top:8px">⚠️ PDFの内容は最新でない場合があります。京都交通公式サイトで最新版をご確認ください。<br>
+    <a href="https://www.kyotokotsu.jp/route/" style="color:#2980b9">https://www.kyotokotsu.jp/route/</a></p>
+  </div>
+</div>
+
+</body>
+</html>

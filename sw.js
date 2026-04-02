@@ -1,10 +1,11 @@
-const CACHE_NAME = 'maizuru-tour-v5';
+const CACHE_NAME = 'maizuru-tour-v6';
 const TILE_CACHE = 'maizuru-tiles-v5';
 
 // Core resources to cache immediately
 const CORE_RESOURCES = [
   './',
   './index.html',
+  './bus-timetable.html',
   './manifest.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
