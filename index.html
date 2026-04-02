@@ -646,17 +646,6 @@ body {
 <button class="gps-btn" id="gpsBtn" onclick="toggleGPS()" title="GPS">📍</button>
 <div class="gps-status" id="gpsStatus"></div>
 
-<!-- Bus Route Toggle Button -->
-<button id="busToggleBtn" onclick="toggleBusRoutes()" style="position:fixed;bottom:56px;left:12px;z-index:800;padding:8px 12px;border-radius:20px;border:2px solid #27ae60;background:white;color:#333;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15)">🚌 Bus/JR</button>
-
-<!-- Bus Route Legend -->
-<div id="busLegend" style="display:none;position:fixed;bottom:100px;left:12px;z-index:800;background:white;border-radius:10px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,0.2);font-size:12px">
-  <div style="margin-bottom:4px;font-weight:700">路線 / Routes</div>
-  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#2196F3;border-radius:2px"></span> 東西循環線</div>
-  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#FF5722;border-radius:2px"></span> 三浜線</div>
-  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#9C27B0;border-radius:2px;border-top:2px dashed #9C27B0"></span> JR舞鶴線</div>
-</div>
-
 <!-- Edit Mode Button -->
 <button class="edit-btn" id="editBtn" onclick="toggleEditMode()">📐 Edit Coords</button>
 
@@ -678,6 +667,25 @@ body {
 
 <!-- Offline Banner -->
 <div class="offline-banner" id="offlineBanner">✅ Offline ready / オフライン対応済</div>
+
+<!-- Bus Route Toggle Button -->
+<button id="busToggleBtn" onclick="toggleBusRoutes()" style="position:fixed;bottom:56px;left:12px;z-index:800;padding:8px 12px;border-radius:20px;border:2px solid #27ae60;background:white;color:#333;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15)">🚌 Bus/JR</button>
+
+<!-- Bus Route Legend -->
+<div id="busLegend" style="display:none;position:fixed;bottom:100px;left:12px;z-index:800;background:white;border-radius:10px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,0.2);font-size:12px;max-height:60vh;overflow-y:auto">
+  <div style="margin-bottom:4px;font-weight:700">路線 / Routes</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#2196F3;border-radius:2px"></span> 東西循環線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#FF5722;border-radius:2px"></span> 三浜線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#4CAF50;border-radius:2px"></span> 高浜線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#795548;border-radius:2px"></span> 田井・野原線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#009688;border-radius:2px"></span> 朝来循環線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#1565C0;border-radius:2px"></span> 長浜循環線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#E91E63;border-radius:2px"></span> 和田線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#607D8B;border-radius:2px"></span> 常・溝尻循環線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#9E9E9E;border-radius:2px"></span> 真倉線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#00BCD4;border-radius:2px"></span> 市内線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#9C27B0;border-radius:2px;border-top:2px dashed #9C27B0"></span> JR舞鶴線</div>
+</div>
 
 <script>
 // ============================================================
@@ -2356,6 +2364,132 @@ const BUS_LINE_DATA = {
       { name: '平口', lat: 35.515681, lng: 135.402109 },
       { name: '大浦小学校前', lat: 35.517175, lng: 135.397609 },
       { name: '平', lat: 35.516953, lng: 135.389149 }
+    ]
+  },
+  takahama: {
+    name_ja: '高浜線', name_en: 'Takahama Line',
+    color: '#4CAF50',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '東高口', lat: 35.4803, lng: 135.4145 },
+      { name: '田中橋', lat: 35.4809, lng: 135.4215 },
+      { name: '小倉', lat: 35.4810, lng: 135.4303 },
+      { name: '鹿原', lat: 35.4812, lng: 135.4401 },
+      { name: '松尾寺駅前', lat: 35.4846, lng: 135.4506 },
+      { name: '松尾寺口', lat: 35.4860, lng: 135.4612 },
+      { name: '六路', lat: 35.4815, lng: 135.4778 },
+      { name: '関屋', lat: 35.4830, lng: 135.4964 },
+      { name: '高浜駅前', lat: 35.4866, lng: 135.5477 }
+    ]
+  },
+  taiNohara: {
+    name_ja: '田井・野原線', name_en: 'Tai/Nohara Line',
+    color: '#795548',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '教育隊前', lat: 35.4858, lng: 135.3996 },
+      { name: '引揚記念館前', lat: 35.5099, lng: 135.3979 },
+      { name: '河辺中', lat: 35.5212, lng: 135.4058 },
+      { name: '室牛', lat: 35.5259, lng: 135.4157 },
+      { name: '栃尾', lat: 35.5317, lng: 135.4362 },
+      { name: '大山', lat: 35.5487, lng: 135.4506 },
+      { name: '野原口', lat: 35.5473, lng: 135.4510 },
+      { name: '田井', lat: 35.5652, lng: 135.4539 },
+      { name: '野原', lat: 35.5678, lng: 135.4281 }
+    ]
+  },
+  aseku: {
+    name_ja: '朝来循環線', name_en: 'Aseku Loop',
+    color: '#009688',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '教育隊前', lat: 35.4858, lng: 135.3996 },
+      { name: '滝ケ浦', lat: 35.4964, lng: 135.4047 },
+      { name: '大波下', lat: 35.5010, lng: 135.4038 },
+      { name: '久原口', lat: 35.5016, lng: 135.4097 },
+      { name: '大波上', lat: 35.5034, lng: 135.4167 },
+      { name: '中宮', lat: 35.5007, lng: 135.4269 },
+      { name: '朝来中', lat: 35.5002, lng: 135.4315 },
+      { name: '国立高専前', lat: 35.4947, lng: 135.4381 },
+      { name: '安岡', lat: 35.4847, lng: 135.4338 },
+      { name: '東高口', lat: 35.4801, lng: 135.4146 }
+    ]
+  },
+  nagahama: {
+    name_ja: '長浜循環線', name_en: 'Nagahama Loop',
+    color: '#1565C0',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '赤れんがパーク', lat: 35.4744, lng: 135.3860 },
+      { name: '自衛隊桟橋前', lat: 35.4765, lng: 135.3751 },
+      { name: '造船所前', lat: 35.4766, lng: 135.3700 },
+      { name: '中舞鶴', lat: 35.4766, lng: 135.3666 },
+      { name: '下四丁目', lat: 35.4779, lng: 135.3631 },
+      { name: '長浜口', lat: 35.4803, lng: 135.3601 },
+      { name: '長浜', lat: 35.4828, lng: 135.3642 },
+      { name: '高倉神社前', lat: 35.4863, lng: 135.3647 },
+      { name: '海上保安学校前', lat: 35.4875, lng: 135.3574 },
+      { name: '舞鶴飛行場前', lat: 35.4885, lng: 135.3750 }
+    ]
+  },
+  wada: {
+    name_ja: '和田線', name_en: 'Wada Line',
+    color: '#E91E63',
+    stops: [
+      { name: '中舞鶴', lat: 35.4763, lng: 135.3677 },
+      { name: '下四丁目', lat: 35.4778, lng: 135.3659 },
+      { name: '長浜口', lat: 35.4804, lng: 135.3623 },
+      { name: '加津良', lat: 35.4818, lng: 135.3534 },
+      { name: '和田', lat: 35.4765, lng: 135.3503 },
+      { name: '藤の森', lat: 35.4748, lng: 135.3472 },
+      { name: '二尾', lat: 35.4637, lng: 135.3320 },
+      { name: '東吉原', lat: 35.4577, lng: 135.3306 },
+      { name: '大森町', lat: 35.4537, lng: 135.3305 },
+      { name: '西舞鶴駅前', lat: 35.4422, lng: 135.3294 }
+    ]
+  },
+  joMizoshiri: {
+    name_ja: '常・溝尻循環線', name_en: 'Jo/Mizoshiri Loop',
+    color: '#607D8B',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '森町', lat: 35.4654, lng: 135.3949 },
+      { name: '行永', lat: 35.4620, lng: 135.3995 },
+      { name: '上地橋', lat: 35.4540, lng: 135.3993 },
+      { name: '常団地前', lat: 35.4515, lng: 135.4032 },
+      { name: '常', lat: 35.4500, lng: 135.4097 },
+      { name: '与保呂小学校前', lat: 35.4491, lng: 135.4167 },
+      { name: '堂の奥', lat: 35.4643, lng: 135.4210 },
+      { name: '溝尻', lat: 35.4651, lng: 135.4131 },
+      { name: '梅ヶ谷口', lat: 35.4681, lng: 135.4063 },
+      { name: '矢の助', lat: 35.4735, lng: 135.4032 }
+    ]
+  },
+  magura: {
+    name_ja: '真倉線', name_en: 'Magura Line',
+    color: '#9E9E9E',
+    stops: [
+      { name: '西舞鶴駅前', lat: 35.4422, lng: 135.3294 },
+      { name: '西高前', lat: 35.4383, lng: 135.3285 },
+      { name: '城南中学校前', lat: 35.4272, lng: 135.3283 },
+      { name: '中筋小学校口', lat: 35.4305, lng: 135.3282 },
+      { name: '京田', lat: 35.4224, lng: 135.3295 },
+      { name: '真倉駅前', lat: 35.4061, lng: 135.3255 },
+      { name: '真倉', lat: 35.3936, lng: 135.3192 }
+    ]
+  },
+  shinai: {
+    name_ja: '市内線', name_en: 'City Line',
+    color: '#00BCD4',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.4686, lng: 135.3943 },
+      { name: '東門', lat: 35.4732, lng: 135.3887 },
+      { name: '中舞鶴', lat: 35.4763, lng: 135.3677 },
+      { name: '造船所前', lat: 35.4767, lng: 135.3699 },
+      { name: '安全祈願碑', lat: 35.4776, lng: 135.3704 },
+      { name: '雁又センター前', lat: 35.4875, lng: 135.3778 },
+      { name: '西町', lat: 35.4509, lng: 135.3242 },
+      { name: '合同庁舎前', lat: 35.4501, lng: 135.3173 }
     ]
   },
   jr: {
