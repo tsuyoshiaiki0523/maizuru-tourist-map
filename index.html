@@ -1039,6 +1039,81 @@ const CAT_COLORS = {
 // ============================================================
 const PIER_LOCATION = { lat: 35.4540, lng: 135.3217 };
 
+// Bus route info for each spot (from 第2ふ頭/西舞鶴駅)
+const BUS_ROUTES = {
+  // === East Maizuru: 赤れんがパーク周辺 (spots 1-5,7) ===
+  1: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩17分<br>🚌 東西循環線バス: 西舞鶴駅前→赤れんがパーク・市役所前（約30分）',
+  2: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩17分<br>🚌 東西循環線バス: 西舞鶴駅前→赤れんがパーク・市役所前（約30分）',
+  3: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩20分<br>🚌 東西循環線バス: 西舞鶴駅前→赤れんがパーク・市役所前（約30分）',
+  4: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩17分<br>🚌 東西循環線バス: 西舞鶴駅前→赤れんがパーク・市役所前（約30分）',
+  5: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩17分<br>🚌 東西循環線バス: 西舞鶴駅前→赤れんがパーク・市役所前（約30分）',
+  7: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩18分',
+
+  // === East Maizuru: 自衛隊エリア (spots 6,8,9) ===
+  6: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩15分<br>🚌 東西循環線バス: 西舞鶴駅前→自衛隊桟橋前（約25分）',
+  8: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩15分<br>🚌 東西循環線バス: 西舞鶴駅前→自衛隊桟橋前（約25分）',
+  9: '🚃 JR舞鶴線: 西舞鶴駅→東舞鶴駅（約7分・210円）→徒歩15分<br>🚌 東西循環線バス: 西舞鶴駅前→自衛隊桟橋前（約25分）',
+
+  // === East Maizuru: 引揚記念館エリア (spots 10,11) ===
+  10: '🚃 JR: 西舞鶴→東舞鶴（7分・210円）<br>🚌 三浜線バス: 東舞鶴駅前→引揚記念館前（16分・450円）<br>⚠️ 1日5本のみ（10:25/11:25/12:50/16:10/17:50発）<br>🚕 バス本数が少ないためタクシー推奨',
+  11: '🚃 JR: 西舞鶴→東舞鶴（7分・210円）<br>🚌 三浜線バス: 東舞鶴駅前→引揚記念館前（16分・450円）<br>⚠️ 1日5本のみ　🚕 タクシー推奨',
+
+  // === East Maizuru: 遠方 (spots 12-14,16) ===
+  12: '🚕 タクシー推奨（東舞鶴駅から約20分）<br>🚌 バス路線なし',
+  13: '🚕 タクシー推奨（東舞鶴駅から約25分）<br>🚌 バス路線なし',
+  14: '🚕 タクシー推奨（東舞鶴駅から約25分）<br>🚌 バス路線なし',
+  16: '🚕 タクシー推奨（東舞鶴駅から約25分）<br>🚌 バス路線なし',
+
+  // === East Maizuru: 青葉山方面 (spot 15) ===
+  15: '🚃 JR: 西舞鶴→東舞鶴（7分）<br>🚕 東舞鶴駅からタクシー約15分',
+
+  // === East Maizuru: 松尾寺方面 (spots 17,18,19) ===
+  17: '🚃 JR舞鶴線: 西舞鶴駅→松尾寺駅（約15分）→徒歩50分<br>🚕 タクシー推奨（松尾寺駅から約15分）',
+  18: '🚃 JR舞鶴線: 西舞鶴駅→松尾寺駅（約15分）→駅前すぐ',
+  19: '🚃 JR舞鶴線: 西舞鶴駅→松尾寺駅（約15分）→徒歩15分',
+
+  // === West Maizuru: 五老スカイタワー (spot 20) ===
+  20: '🚌 東西循環線バス: 西舞鶴駅前→五老ヶ岳公園口（約15分）<br>⚠️ バス停から山頂まで急坂あり（徒歩約30分）<br>🚕 タクシー推奨（西舞鶴駅から約15分で山頂まで）',
+
+  // === West Maizuru: 田辺城・西舞鶴中心部 (spots 21-28) ===
+  21: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  22: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  23: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  24: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  25: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  26: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  27: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  28: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+
+  // === West Maizuru: 港周辺 (spots 29,30,31,32,35) ===
+  29: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  30: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  31: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  32: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+  35: '🚶 第2ふ頭から徒歩圏内（バス不要）',
+
+  // === West Maizuru: 遠方 (spots 33,34,37,40,42) ===
+  33: '🚕 タクシー推奨（西舞鶴駅から約20分）<br>🚌 バス路線なし（西方寺地区）',
+  34: '🚕 タクシー推奨（西舞鶴駅から約10分）',
+  37: '🚕 タクシー推奨（西舞鶴駅から約15分）<br>🚌 バス路線なし（吉田地区）',
+  40: '🚕 タクシー推奨（西舞鶴駅から約30分）<br>🚌 バス路線なし',
+  42: '🚕 タクシー推奨（西舞鶴駅から約15分）',
+
+  // === East Maizuru: その他 (spots 36,38,39,41) ===
+  36: '🚃 JR: 西舞鶴→東舞鶴（7分）→徒歩20分<br>🚌 東西循環線バス利用可',
+  38: '🚃 JR: 西舞鶴→東舞鶴（7分）<br>🚌 東西循環線バス: 中舞鶴下車→徒歩5分',
+  39: '🚕 タクシー推奨（東舞鶴駅から約30分）<br>🚌 バス路線なし',
+  41: '🚃 JR: 西舞鶴→東舞鶴（7分・210円）→徒歩10分'
+};
+
+// JR Train timetable: 西舞鶴→東舞鶴 (cached for offline use)
+const JR_TIMETABLE = [
+  '05:25','06:13','07:06','07:40','08:32','09:14','10:04','10:57',
+  '11:55','12:59','13:40','13:55','15:04','15:29','15:54','16:33',
+  '17:32','17:55','18:20','19:09','19:59','20:12','20:58','21:09',
+  '21:48','22:12','23:28'
+];
+
 const SPOTS = [
   {
     id: 1, name_ja: 'まいづるサンセットクルーズ', name_en: 'Maizuru Sunset Cruise',
@@ -1931,7 +2006,8 @@ function renderList() {
     if (userLat !== null) {
       const gpsDist = calcDistance(userLat, userLng, spot.lat, spot.lng);
       const walkMin = Math.round(gpsDist / 0.08); // ~80m/min walking
-      gpsDistHTML = `<div class="card-gps-dist">📍 ${t('fromHere')}: ${formatDist(gpsDist)}（${t('walk')} ~${walkMin}${t('minutes')}）</div>`;
+      const taxiMin = Math.max(3, Math.round(gpsDist / 0.5)); // ~30km/h average
+      gpsDistHTML = `<div class="card-gps-dist">📍 ${formatDist(gpsDist)}｜🚶${walkMin}分｜🚕${taxiMin}分</div>`;
     }
     return `
       <div class="spot-card" onclick="openDetail(${spot.id})">
@@ -1943,7 +2019,6 @@ function renderList() {
             ${cats}
           </div>
           ${gpsDistHTML}
-          <div class="card-distance">🚢 ${t('fromPier')}: ${dist}</div>
         </div>
       </div>
     `;
@@ -1966,26 +2041,55 @@ function openDetail(id) {
   const parking = currentLang === 'en' ? spot.parking_en : spot.parking_ja;
   const cats = spot.categories.map(c => `<span class="modal-cat">${t('categories.' + c)}</span>`).join('');
 
-  // Access methods (localized)
-  const walkText = localizeAccess(spot.access.walk);
-  const busText = localizeAccess(spot.access.bus);
-  const taxiText = localizeAccess(spot.access.taxi);
-
+  // Access: GPS-based distance + bus route info
   let accessHTML = '';
-  // GPS-based distance from current location
   if (userLat !== null) {
     const gpsDist = calcDistance(userLat, userLng, spot.lat, spot.lng);
     const walkMin = Math.round(gpsDist / 0.08);
-    accessHTML += `<div class="access-method" style="border:2px solid #4285f4"><div class="method-title" style="color:#4285f4">📍 ${t('fromHere')}</div><div class="method-detail">${formatDist(gpsDist)} — ${t('walk')} ~${walkMin}${t('minutes')}</div></div>`;
+    const taxiMin = Math.max(3, Math.round(gpsDist / 0.5));
+    accessHTML += `<div class="access-method" style="border:2px solid #4285f4">
+      <div class="method-title" style="color:#4285f4">📍 現在地からの距離 / Distance from you</div>
+      <div class="method-detail" style="font-size:18px;font-weight:700;color:#333">${formatDist(gpsDist)}</div>
+      <div style="display:flex;gap:12px;margin-top:6px">
+        <div class="access-method" style="flex:1;margin:0;text-align:center">
+          <div class="method-title">🚶 徒歩 / Walk</div>
+          <div class="method-detail" style="font-size:16px;font-weight:600">約${walkMin}分</div>
+        </div>
+        <div class="access-method" style="flex:1;margin:0;text-align:center">
+          <div class="method-title">🚕 タクシー / Taxi</div>
+          <div class="method-detail" style="font-size:16px;font-weight:600">約${taxiMin}分</div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    accessHTML += `<div class="access-method" style="border:2px solid #e74c3c;background:#fef5f5">
+      <div class="method-title" style="color:#e74c3c">📍 GPS未取得 / GPS not available</div>
+      <div class="method-detail">位置情報を許可すると現在地からの距離が表示されます<br>Allow location access to see distance from your position</div>
+    </div>`;
   }
-  if (walkText) {
-    accessHTML += `<div class="access-method"><div class="method-title">🚶 ${t('walk')}</div><div class="method-detail">${walkText}</div></div>`;
-  }
-  if (busText) {
-    accessHTML += `<div class="access-method"><div class="method-title">🚌 ${t('bus')}</div><div class="method-detail">${busText}</div></div>`;
-  }
-  if (taxiText) {
-    accessHTML += `<div class="access-method"><div class="method-title">🚕 ${t('taxi')}</div><div class="method-detail">${taxiText}</div><div class="method-time">📏 ${spot.access.dist}</div></div>`;
+  // Bus/train route info
+  const busRoute = BUS_ROUTES[spot.id];
+  if (busRoute) {
+    // Find next JR train if route mentions JR
+    let nextTrainHTML = '';
+    if (busRoute.includes('JR')) {
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const nextTrains = JR_TIMETABLE.filter(t => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m > nowMin;
+      }).slice(0, 3);
+      if (nextTrains.length > 0) {
+        nextTrainHTML = `<div style="margin-top:6px;padding:6px 8px;background:#e8f4fd;border-radius:6px;font-size:12px;color:#1a5276">🚃 次のJR列車（西舞鶴→東舞鶴）: <strong>${nextTrains.join(' / ')}</strong></div>`;
+      }
+    }
+    accessHTML += `<div class="access-method" style="border:2px solid #27ae60">
+      <div class="method-title" style="color:#27ae60">🚌 公共交通機関 / Public Transport</div>
+      <div class="method-detail">${busRoute}</div>
+      ${nextTrainHTML}
+      <div style="margin-top:6px;padding:6px 8px;background:#fff3cd;border-radius:6px;font-size:11px;color:#856404">💴 バスの支払いは<strong>現金（キャッシュ）のみ</strong>です。ICカード・クレジットカード不可。<br>💴 Buses accept <strong>cash only</strong>. No IC cards or credit cards.</div>
+      <div style="margin-top:4px;padding:6px 8px;background:#f0f0f0;border-radius:6px;font-size:11px;color:#666">📋 時刻表は事前にキャッシュされた情報です。実際のダイヤは変更される場合があります。<br>📋 Timetable is pre-cached data. Schedules may change.</div>
+    </div>`;
   }
 
   // Photo
@@ -2041,7 +2145,7 @@ function openDetail(id) {
     </div>
 
     <div class="access-section">
-      <h4>🚢 ${t('accessInfo')}</h4>
+      <h4>🗺️ アクセス / Access</h4>
       ${accessHTML}
     </div>
 

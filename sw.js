@@ -1,5 +1,5 @@
-const CACHE_NAME = 'maizuru-tour-v4';
-const TILE_CACHE = 'maizuru-tiles-v4';
+const CACHE_NAME = 'maizuru-tour-v5';
+const TILE_CACHE = 'maizuru-tiles-v5';
 
 // Core resources to cache immediately
 const CORE_RESOURCES = [
