@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "maizuru-map",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-l", "3456", "/Users/aiki/Desktop/Maizurutour"],
+      "port": 3456
+    }
+  ]
+}
