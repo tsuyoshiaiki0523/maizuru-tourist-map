@@ -646,6 +646,17 @@ body {
 <button class="gps-btn" id="gpsBtn" onclick="toggleGPS()" title="GPS">📍</button>
 <div class="gps-status" id="gpsStatus"></div>
 
+<!-- Bus Route Toggle Button -->
+<button id="busToggleBtn" onclick="toggleBusRoutes()" style="position:fixed;bottom:56px;left:12px;z-index:800;padding:8px 12px;border-radius:20px;border:2px solid #27ae60;background:white;color:#333;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15)">🚌 Bus/JR</button>
+
+<!-- Bus Route Legend -->
+<div id="busLegend" style="display:none;position:fixed;bottom:100px;left:12px;z-index:800;background:white;border-radius:10px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,0.2);font-size:12px">
+  <div style="margin-bottom:4px;font-weight:700">路線 / Routes</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#2196F3;border-radius:2px"></span> 東西循環線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#FF5722;border-radius:2px"></span> 三浜線</div>
+  <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="display:inline-block;width:20px;height:4px;background:#9C27B0;border-radius:2px;border-top:2px dashed #9C27B0"></span> JR舞鶴線</div>
+</div>
+
 <!-- Edit Mode Button -->
 <button class="edit-btn" id="editBtn" onclick="toggleEditMode()">📐 Edit Coords</button>
 
@@ -2290,6 +2301,137 @@ async function registerSW() {
       console.log('SW registration failed:', e);
     }
   }
+}
+
+// ============================================================
+// BUS ROUTES ON MAP
+// ============================================================
+const BUS_LINE_DATA = {
+  eastWest: {
+    name_ja: '東西循環線', name_en: 'East-West Loop',
+    color: '#2196F3',
+    stops: [
+      { name: '西舞鶴駅前', lat: 35.442155, lng: 135.329410 },
+      { name: '千日前', lat: 35.445133, lng: 135.329103 },
+      { name: '本町', lat: 35.448196, lng: 135.328724 },
+      { name: '広小路', lat: 35.450252, lng: 135.328989 },
+      { name: '税務署前', lat: 35.450713, lng: 135.336861 },
+      { name: '倉谷口', lat: 35.450741, lng: 135.342550 },
+      { name: '上安', lat: 35.451869, lng: 135.347151 },
+      { name: '五老トンネル西口', lat: 35.457039, lng: 135.350990 },
+      { name: '五老ヶ岳公園口', lat: 35.461511, lng: 135.358332 },
+      { name: '道芝口', lat: 35.467712, lng: 135.364393 },
+      { name: '上四丁目', lat: 35.472697, lng: 135.366415 },
+      { name: '中舞鶴', lat: 35.476306, lng: 135.367706 },
+      { name: '造船所前', lat: 35.476695, lng: 135.369921 },
+      { name: '自衛隊桟橋前', lat: 35.476614, lng: 135.375419 },
+      { name: '三宅団地前', lat: 35.474564, lng: 135.381416 },
+      { name: '赤れんがパーク・市役所前', lat: 35.473888, lng: 135.386047 },
+      { name: '東門', lat: 35.473199, lng: 135.388744 },
+      { name: '駅前通三条', lat: 35.474007, lng: 135.392985 },
+      { name: '大門通三条', lat: 35.474195, lng: 135.392116 },
+      { name: '実業会館前', lat: 35.472851, lng: 135.393266 },
+      { name: '東舞鶴駅前', lat: 35.468736, lng: 135.394320 }
+    ]
+  },
+  mihama: {
+    name_ja: '三浜線', name_en: 'Mihama Line',
+    color: '#FF5722',
+    stops: [
+      { name: '東舞鶴駅前', lat: 35.468573, lng: 135.394412 },
+      { name: '実業会館前', lat: 35.472788, lng: 135.393176 },
+      { name: '駅前通三条', lat: 35.473810, lng: 135.392821 },
+      { name: '七条', lat: 35.475369, lng: 135.396302 },
+      { name: '浮島市民病院前', lat: 35.476062, lng: 135.399306 },
+      { name: '松島', lat: 35.476484, lng: 135.401125 },
+      { name: '市場', lat: 35.476988, lng: 135.403333 },
+      { name: '教育隊前', lat: 35.485760, lng: 135.399574 },
+      { name: 'さくらどおりマンション前', lat: 35.493140, lng: 135.399560 },
+      { name: '滝ケ浦', lat: 35.496369, lng: 135.404711 },
+      { name: '板硝子工場前', lat: 35.499322, lng: 135.404591 },
+      { name: '大波下', lat: 35.501781, lng: 135.402664 },
+      { name: '若浦中学校前', lat: 35.505245, lng: 135.398253 },
+      { name: '引揚記念館前', lat: 35.509948, lng: 135.397912 },
+      { name: '中田', lat: 35.513109, lng: 135.401365 },
+      { name: '平口', lat: 35.515681, lng: 135.402109 },
+      { name: '大浦小学校前', lat: 35.517175, lng: 135.397609 },
+      { name: '平', lat: 35.516953, lng: 135.389149 }
+    ]
+  },
+  jr: {
+    name_ja: 'JR舞鶴線', name_en: 'JR Maizuru Line',
+    color: '#9C27B0',
+    stops: [
+      { name: '西舞鶴駅', lat: 35.4418, lng: 135.3284 },
+      { name: '東舞鶴駅', lat: 35.4680, lng: 135.3943 }
+    ]
+  }
+};
+
+let busLayerGroup = null;
+let busVisible = false;
+
+function toggleBusRoutes() {
+  busVisible = !busVisible;
+  const btn = document.getElementById('busToggleBtn');
+  const legend = document.getElementById('busLegend');
+  if (busVisible) {
+    btn.style.background = '#27ae60';
+    btn.style.color = 'white';
+    legend.style.display = 'block';
+    showBusRoutes();
+  } else {
+    btn.style.background = 'white';
+    btn.style.color = '#333';
+    legend.style.display = 'none';
+    if (busLayerGroup) {
+      map.removeLayer(busLayerGroup);
+      busLayerGroup = null;
+    }
+  }
+}
+
+function showBusRoutes() {
+  if (busLayerGroup) map.removeLayer(busLayerGroup);
+  busLayerGroup = L.layerGroup();
+  const isJa = currentLang === 'ja';
+
+  for (const [key, route] of Object.entries(BUS_LINE_DATA)) {
+    const coords = route.stops.map(s => [s.lat, s.lng]);
+    const routeName = isJa ? route.name_ja : route.name_en;
+
+    // Draw polyline
+    const line = L.polyline(coords, {
+      color: route.color,
+      weight: key === 'jr' ? 5 : 4,
+      opacity: 0.8,
+      dashArray: key === 'jr' ? '10, 8' : null
+    });
+    line.bindPopup(`<strong style="color:${route.color}">${routeName}</strong>`);
+    busLayerGroup.addLayer(line);
+
+    // Draw bus stop markers
+    route.stops.forEach(stop => {
+      const isStation = stop.name.includes('駅');
+      const radius = isStation ? 6 : 4;
+      const marker = L.circleMarker([stop.lat, stop.lng], {
+        radius: radius,
+        fillColor: route.color,
+        color: 'white',
+        weight: 2,
+        fillOpacity: 0.9
+      });
+      marker.bindPopup(`
+        <div style="text-align:center">
+          <strong style="color:${route.color}">${routeName}</strong><br>
+          <span style="font-size:14px;font-weight:700">${stop.name}</span>
+        </div>
+      `);
+      busLayerGroup.addLayer(marker);
+    });
+  }
+
+  busLayerGroup.addTo(map);
 }
 
 // ============================================================
